@@ -1,3 +1,5 @@
+const API_BASE = "https://vitaseed-backend.onrender.com";
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("contactForm");
   if (!form) return;

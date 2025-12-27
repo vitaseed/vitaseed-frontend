@@ -1,39 +1,72 @@
 const API_BASE = "https://vitaseed-backend.onrender.com";
 
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("contactForm");
-  if (!form) return;
+/* ---------- LOAD PRODUCTS ---------- */
+async function loadProducts() {
+  try {
+    const res = await fetch(`${API_BASE}/api/products`);
+    const products = await res.json();
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+    const container = document.getElementById("product-list");
+    if (!container) return;
 
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const message = document.getElementById("message").value.trim();
-    const status = document.getElementById("status");
+    container.innerHTML = "";
 
-    status.innerText = "Sending...";
+    products.forEach(p => {
+      container.innerHTML += `
+        <div class="product-card">
+          <h3>${p.name}</h3>
+          <p>Price: ₹${p.price}</p>
+          <button onclick="orderNow('${p.id}')">Order</button>
+        </div>
+      `;
+    });
+  } catch (err) {
+    console.error("Failed to load products", err);
+  }
+}
 
-    try {
-      const res = await fetch(
-        "https://vitaseed-backend.onrender.com/api/contact",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, message })
-        }
-      );
+/* ---------- PLACE ORDER ---------- */
+async function orderNow(productId) {
+  const order = {
+    productId,
+    quantity: 1
+  };
 
-      const data = await res.json();
+  try {
+    const res = await fetch(`${API_BASE}/api/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(order)
+    });
 
-      if (data.success) {
-        status.innerText = "Message sent successfully ✅";
-        form.reset();
-      } else {
-        status.innerText = "Failed to send message ❌";
-      }
-    } catch (err) {
-      status.innerText = "Server error ❌";
-    }
-  });
-});
+    const data = await res.json();
+    alert(data.message || "Order placed successfully");
+  } catch (err) {
+    alert("Order failed");
+  }
+}
+
+/* ---------- CONTACT FORM ---------- */
+async function submitContactForm(e) {
+  e.preventDefault();
+
+  const payload = {
+    name: document.getElementById("name").value,
+    email: document.getElementById("email").value,
+    message: document.getElementById("message").value
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/api/contacts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    alert(data.message || "Message sent");
+    e.target.reset();
+  } catch (err) {
+    alert("Failed to send message");
+  }
+}

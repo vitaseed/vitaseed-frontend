@@ -20,14 +20,21 @@
 <main class="contact-container">
   <h1>Contact VitaSeed</h1>
 
-  <form id="contactForm">
-    <input type="text" id="name" placeholder="Your Name" required />
-    <input type="email" id="email" placeholder="Your Email" required />
-    <textarea id="message" placeholder="Your Message" required></textarea>
-    <button type="submit">Send Message</button>
+  <form id="contactForm" novalidate>
+    <label for="name" class="sr-only">Name</label>
+    <input type="text" id="name" name="name" placeholder="Your Name" required />
+
+    <label for="email" class="sr-only">Email</label>
+    <input type="email" id="email" name="email" placeholder="Your Email" required />
+
+    <label for="message" class="sr-only">Message</label>
+    <textarea id="message" name="message" placeholder="Your Message" required></textarea>
+
+    <button type="submit" id="contactSubmit">Send Message</button>
   </form>
 
-  <p id="status"></p>
+  <!-- status area: aria-live for accessible updates -->
+  <p id="status" role="status" aria-live="polite"></p>
 </main>
 
 <script src="js/main.js"></script>

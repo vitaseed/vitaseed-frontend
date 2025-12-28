@@ -9,11 +9,10 @@ function setStatus(text, isError = false) {
 }
 
 function isValidEmail(email) {
-  // Simple email regex (reasonable for client-side quick validation)
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-/* ---------- LOAD PRODUCTS (unchanged behavior) ---------- */
+/* ---------- LOAD PRODUCTS ---------- */
 async function loadProducts() {
   try {
     const res = await fetch(`${API_BASE}/api/products`);
@@ -38,12 +37,9 @@ async function loadProducts() {
   }
 }
 
-/* ---------- PLACE ORDER (robust response handling) ---------- */
+/* ---------- PLACE ORDER ---------- */
 async function orderNow(productId) {
-  const order = {
-    productId,
-    quantity: 1
-  };
+  const order = { productId, quantity: 1 };
 
   try {
     const res = await fetch(`${API_BASE}/api/orders`, {
@@ -60,7 +56,7 @@ async function orderNow(productId) {
     const ct = res.headers.get("content-type") || "";
     let message = "Order placed successfully";
     if (res.status === 204 || !ct) {
-      // nothing to parse
+      // no body
     } else if (ct.includes("application/json")) {
       const data = await res.json().catch(() => ({}));
       message = data.message || message;
@@ -81,14 +77,12 @@ async function submitContactForm(e) {
 
   const submitBtn = document.getElementById("contactSubmit");
   if (submitBtn) submitBtn.disabled = true;
-
   setStatus("Sending...");
 
   const name = (document.getElementById("name") || {}).value || "";
   const email = (document.getElementById("email") || {}).value || "";
   const message = (document.getElementById("message") || {}).value || "";
 
-  // Basic client-side validation to prevent obvious 400s
   if (!name.trim() || !email.trim() || !message.trim()) {
     setStatus("All fields are required.", true);
     if (submitBtn) submitBtn.disabled = false;
@@ -102,6 +96,10 @@ async function submitContactForm(e) {
 
   const payload = { name: name.trim(), email: email.trim(), message: message.trim() };
 
+  // --- DEBUG LOGGING: show exactly what's being sent ---
+  console.log("Contact form: sending payload to", `${API_BASE}/api/contacts`);
+  console.log("Payload:", payload);
+
   try {
     const res = await fetch(`${API_BASE}/api/contacts`, {
       method: "POST",
@@ -109,41 +107,50 @@ async function submitContactForm(e) {
       body: JSON.stringify(payload)
     });
 
-    // If server rejects request with 4xx/5xx it often includes a helpful message in the body
+    // If server rejects request, attempt to read body for diagnostics
     if (!res.ok) {
-      // attempt to read JSON or text for server-provided message
       const ct = res.headers.get("content-type") || "";
-      let serverMsg = `Server responded ${res.status} ${res.statusText}`;
+      let serverMsg = `Server returned ${res.status} ${res.statusText}`;
       if (ct.includes("application/json")) {
+        // try parse JSON error body
         const errJson = await res.json().catch(() => null);
-        if (errJson && errJson.error) serverMsg = errJson.error;
-        else if (errJson && errJson.message) serverMsg = errJson.message;
+        console.error("Server responded with JSON error body:", errJson);
+        if (errJson) serverMsg = errJson.error || errJson.message || JSON.stringify(errJson);
       } else {
         const txt = await res.text().catch(() => "");
+        console.error("Server responded with text error body:", txt);
         if (txt) serverMsg = txt;
       }
+      // surface server message in UI and console
+      setStatus(serverMsg, true);
       throw new Error(serverMsg);
     }
 
-    // Successful response: handle JSON, text, or 204
+    // Success path: handle JSON, text or 204
     const ct = res.headers.get("content-type") || "";
     let successMessage = "Message sent";
     if (res.status === 204 || !ct) {
-      // 204 No Content — leave default message
+      // nothing to parse
     } else if (ct.includes("application/json")) {
       const data = await res.json().catch(() => null);
+      console.log("Server success JSON:", data);
       if (data && data.message) successMessage = data.message;
     } else {
       const text = await res.text().catch(() => "");
-      if (text) successMessage = text;
+      if (text) {
+        console.log("Server success text:", text);
+        successMessage = text;
+      }
     }
 
     setStatus(successMessage);
     e.target.reset();
   } catch (err) {
-    // Surface a friendly message but keep full details in console
-    console.error("Contact submit failed:", err);
-    setStatus(err.message || "Failed to send message. See console for details.", true);
+    console.error("Contact submit failed (caught):", err);
+    // err.message was already set to server message when possible
+    if (!document.getElementById("status").textContent) {
+      setStatus(err.message || "Failed to send message. See console for details.", true);
+    }
   } finally {
     if (submitBtn) submitBtn.disabled = false;
   }
@@ -151,15 +158,9 @@ async function submitContactForm(e) {
 
 /* ---------- INIT ---------- */
 document.addEventListener("DOMContentLoaded", () => {
-  // contact form hookup
   const form = document.getElementById("contactForm");
-  if (form) {
-    form.addEventListener("submit", submitContactForm);
-  }
+  if (form) form.addEventListener("submit", submitContactForm);
 
-  // load products if product list exists on page
   const productList = document.getElementById("product-list");
-  if (productList) {
-    loadProducts();
-  }
+  if (productList) loadProducts();
 });

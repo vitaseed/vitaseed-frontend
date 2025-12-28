@@ -70,3 +70,10 @@ async function submitContactForm(e) {
     alert("Failed to send message");
   }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("contactForm");
+  if (form) {
+    form.addEventListener("submit", submitContactForm);
+  }
+});

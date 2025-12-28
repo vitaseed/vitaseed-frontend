@@ -77,3 +77,10 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener("submit", submitContactForm);
   }
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("contactForm");
+  if (form) {
+    form.addEventListener("submit", submitContactForm);
+  }
+});

@@ -128,7 +128,7 @@ async function submitContactForm(e) {
 
     // Success path: handle JSON, text or 204
     const ct = res.headers.get("content-type") || "";
-    let successMessage = "Message sent";
+    let successMessage = "Thanks! We’ve received your enquiry.";
     if (res.status === 204 || !ct) {
       // nothing to parse
     } else if (ct.includes("application/json")) {
@@ -143,7 +143,7 @@ async function submitContactForm(e) {
       }
     }
 
-    setStatus(successMessage);
+    setStatus("Thanks! We’ve received your enquiry. Our team will respond soon.");
     e.target.reset();
   } catch (err) {
     console.error("Contact submit failed (caught):", err);

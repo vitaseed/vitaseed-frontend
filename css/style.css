@@ -26,6 +26,7 @@ header nav a {
 .featured-products {
     padding: 20px;
 }
+
 .logo {
     height: 50px;
 }
@@ -36,4 +37,13 @@ footer {
     padding: 15px 0;
 }
 
+
+/*contact page*/
+
+.teaser-note {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 1rem;
+  max-width: 520px;
+}
 

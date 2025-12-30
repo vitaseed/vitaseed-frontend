@@ -2,13 +2,30 @@ const API_BASE = "https://vitaseed-backend.onrender.com";
 const content = document.getElementById("adminContent");
 const title = document.getElementById("sectionTitle");
 
+let ADMIN_KEY = "";
+
 /* ---------- UTIL ---------- */
 function clearUI(text) {
   title.textContent = text;
   content.innerHTML = "<p>Loading...</p>";
 }
 
-/* ---------- PRODUCTS ---------- */
+function requireAdminKey() {
+  if (!ADMIN_KEY) {
+    ADMIN_KEY = prompt("Enter Admin Key");
+  }
+
+  if (!ADMIN_KEY) {
+    alert("Admin key is required");
+    throw new Error("Admin key missing");
+  }
+
+  return {
+    "x-admin-key": ADMIN_KEY
+  };
+}
+
+/* ---------- PRODUCTS (PUBLIC) ---------- */
 async function loadProducts() {
   clearUI("Products");
 
@@ -32,53 +49,73 @@ async function loadProducts() {
   });
 }
 
-/* ---------- ORDERS ---------- */
+/* ---------- ORDERS (ADMIN) ---------- */
 async function loadOrders() {
-  clearUI("Orders");
+  try {
+    clearUI("Orders");
 
-  const res = await fetch(`${API_BASE}/api/orders`);
-  const data = await res.json();
+    const res = await fetch(`${API_BASE}/api/orders`, {
+      headers: requireAdminKey()
+    });
 
-  content.innerHTML = "";
+    if (!res.ok) throw new Error("Unauthorized");
 
-  if (!data.length) {
-    content.innerHTML = "<p>No orders yet.</p>";
-    return;
+    const data = await res.json();
+    content.innerHTML = "";
+
+    if (!data.length) {
+      content.innerHTML = "<p>No orders yet.</p>";
+      return;
+    }
+
+    data.forEach(o => {
+      content.innerHTML += `
+        <div class="card">
+          <p><strong>Product:</strong> ${o.productName}</p>
+          <p><strong>Qty:</strong> ${o.quantity}</p>
+          <p><small>${o.createdAt ? new Date(o.createdAt).toLocaleString() : "-"}</small></p>
+        </div>
+      `;
+    });
+
+  } catch (err) {
+    content.innerHTML = "<p style='color:red'>Unauthorized or server error</p>";
+    ADMIN_KEY = ""; // reset on failure
   }
-
-  data.forEach(o => {
-    content.innerHTML += `
-      <div class="card">
-        <p><strong>Product:</strong> ${o.productName}</p>
-        <p><strong>Qty:</strong> ${o.quantity}</p>
-        <p><small>${new Date(o.createdAt).toLocaleString()}</small></p>
-      </div>
-    `;
-  });
 }
 
-/* ---------- CONTACTS ---------- */
+/* ---------- CONTACTS (ADMIN) ---------- */
 async function loadContacts() {
-  clearUI("Contact Enquiries");
+  try {
+    clearUI("Contact Enquiries");
 
-  const res = await fetch(`${API_BASE}/api/contacts`);
-  const data = await res.json();
+    const res = await fetch(`${API_BASE}/api/contacts`, {
+      headers: requireAdminKey()
+    });
 
-  content.innerHTML = "";
+    if (!res.ok) throw new Error("Unauthorized");
 
-  if (!data.length) {
-    content.innerHTML = "<p>No enquiries.</p>";
-    return;
+    const data = await res.json();
+    content.innerHTML = "";
+
+    if (!data.length) {
+      content.innerHTML = "<p>No enquiries.</p>";
+      return;
+    }
+
+    data.forEach(c => {
+      content.innerHTML += `
+        <div class="card">
+          <h4>${c.name}</h4>
+          <p>${c.email}</p>
+          <p>${c.message}</p>
+          <small>${c.createdAt ? new Date(c.createdAt).toLocaleString() : "-"}</small>
+        </div>
+      `;
+    });
+
+  } catch (err) {
+    content.innerHTML = "<p style='color:red'>Unauthorized or server error</p>";
+    ADMIN_KEY = ""; // reset on failure
   }
-
-  data.forEach(c => {
-    content.innerHTML += `
-      <div class="card">
-        <h4>${c.name}</h4>
-        <p>${c.email}</p>
-        <p>${c.message}</p>
-        <small>${new Date(c.createdAt).toLocaleString()}</small>
-      </div>
-    `;
-  });
 }

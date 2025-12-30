@@ -1,0 +1,58 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f5f7f6;
+  color: #333;
+}
+
+.admin-header {
+  background: #2e7d32;
+  color: #fff;
+  padding: 15px;
+  text-align: center;
+}
+
+.admin-nav {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  background: #e8f5e9;
+}
+
+.admin-nav button {
+  padding: 8px 16px;
+  border: none;
+  background: #4caf50;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.admin-nav button:hover {
+  background: #388e3c;
+}
+
+main {
+  padding: 20px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+}
+
+.card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+footer {
+  text-align: center;
+  padding: 10px;
+  background: #e8f5e9;
+  margin-top: 30px;
+}

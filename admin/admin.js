@@ -21,7 +21,8 @@ function requireAdminKey() {
   }
 
   return {
-    "x-admin-key": ADMIN_KEY
+    "x-admin-key": ADMIN_KEY,
+    "Content-Type": "application/json"
   };
 }
 
@@ -29,24 +30,29 @@ function requireAdminKey() {
 async function loadProducts() {
   clearUI("Products");
 
-  const res = await fetch(`${API_BASE}/api/products`);
-  const data = await res.json();
+  try {
+    const res = await fetch(`${API_BASE}/api/products`);
+    const data = await res.json();
 
-  content.innerHTML = "";
+    content.innerHTML = "";
 
-  if (!data.length) {
-    content.innerHTML = "<p>No products found.</p>";
-    return;
+    if (!data.length) {
+      content.innerHTML = "<p>No products found.</p>";
+      return;
+    }
+
+    data.forEach(p => {
+      content.innerHTML += `
+        <div class="card">
+          <h3>${p.name}</h3>
+          <p>Price: ₹${p.price}</p>
+        </div>
+      `;
+    });
+
+  } catch (err) {
+    content.innerHTML = "<p style='color:red'>Failed to load products</p>";
   }
-
-  data.forEach(p => {
-    content.innerHTML += `
-      <div class="card">
-        <h3>${p.name}</h3>
-        <p>Price: ₹${p.price}</p>
-      </div>
-    `;
-  });
 }
 
 /* ---------- ORDERS (ADMIN) ---------- */
@@ -79,8 +85,8 @@ async function loadOrders() {
     });
 
   } catch (err) {
-    content.innerHTML = "<p style='color:red'>Unauthorized or server error</p>";
-    ADMIN_KEY = ""; // reset on failure
+    content.innerHTML = "<p style='color:red'>Access denied or server error</p>";
+    ADMIN_KEY = "";
   }
 }
 
@@ -115,7 +121,7 @@ async function loadContacts() {
     });
 
   } catch (err) {
-    content.innerHTML = "<p style='color:red'>Unauthorized or server error</p>";
-    ADMIN_KEY = ""; // reset on failure
+    content.innerHTML = "<p style='color:red'>Access denied or server error</p>";
+    ADMIN_KEY = "";
   }
 }

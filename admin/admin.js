@@ -49,7 +49,7 @@ async function loadOrders() {
   data.forEach(o => {
     content.innerHTML += `
       <div class="card">
-        <p><strong>Product:</strong> ${o.productId}</p>
+        <p><strong>Product:</strong> ${o.productName}</p>
         <p><strong>Qty:</strong> ${o.quantity}</p>
         <p><small>${new Date(o.createdAt).toLocaleString()}</small></p>
       </div>

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://vitaseed-frontend.github.io/sitemap.xml

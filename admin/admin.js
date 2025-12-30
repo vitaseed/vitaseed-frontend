@@ -2,7 +2,8 @@ const API_BASE = "https://vitaseed-backend.onrender.com";
 const content = document.getElementById("adminContent");
 const title = document.getElementById("sectionTitle");
 
-let ADMIN_KEY = "";
+// Persist admin key
+let ADMIN_KEY = localStorage.getItem("ADMIN_KEY") || "";
 
 /* ---------- UTIL ---------- */
 function clearUI(text) {
@@ -10,19 +11,20 @@ function clearUI(text) {
   content.innerHTML = "<p>Loading...</p>";
 }
 
-function requireAdminKey() {
+function getAdminHeaders() {
   if (!ADMIN_KEY) {
-    ADMIN_KEY = prompt("Enter Admin Key");
-  }
+    ADMIN_KEY = prompt("Enter Admin Key (case-sensitive):");
 
-  if (!ADMIN_KEY) {
-    alert("Admin key is required");
-    throw new Error("Admin key missing");
+    if (!ADMIN_KEY) {
+      throw new Error("Admin key required");
+    }
+
+    ADMIN_KEY = ADMIN_KEY.trim(); // 🔥 IMPORTANT
+    localStorage.setItem("ADMIN_KEY", ADMIN_KEY);
   }
 
   return {
-    "x-admin-key": ADMIN_KEY,
-    "Content-Type": "application/json"
+    "x-admin-key": ADMIN_KEY
   };
 }
 
@@ -30,29 +32,24 @@ function requireAdminKey() {
 async function loadProducts() {
   clearUI("Products");
 
-  try {
-    const res = await fetch(`${API_BASE}/api/products`);
-    const data = await res.json();
+  const res = await fetch(`${API_BASE}/api/products`);
+  const data = await res.json();
 
-    content.innerHTML = "";
+  content.innerHTML = "";
 
-    if (!data.length) {
-      content.innerHTML = "<p>No products found.</p>";
-      return;
-    }
-
-    data.forEach(p => {
-      content.innerHTML += `
-        <div class="card">
-          <h3>${p.name}</h3>
-          <p>Price: ₹${p.price}</p>
-        </div>
-      `;
-    });
-
-  } catch (err) {
-    content.innerHTML = "<p style='color:red'>Failed to load products</p>";
+  if (!data.length) {
+    content.innerHTML = "<p>No products found.</p>";
+    return;
   }
+
+  data.forEach(p => {
+    content.innerHTML += `
+      <div class="card">
+        <h3>${p.name}</h3>
+        <p>Price: ₹${p.price}</p>
+      </div>
+    `;
+  });
 }
 
 /* ---------- ORDERS (ADMIN) ---------- */
@@ -61,7 +58,7 @@ async function loadOrders() {
     clearUI("Orders");
 
     const res = await fetch(`${API_BASE}/api/orders`, {
-      headers: requireAdminKey()
+      headers: getAdminHeaders()
     });
 
     if (!res.ok) throw new Error("Unauthorized");
@@ -79,14 +76,15 @@ async function loadOrders() {
         <div class="card">
           <p><strong>Product:</strong> ${o.productName}</p>
           <p><strong>Qty:</strong> ${o.quantity}</p>
-          <p><small>${o.createdAt ? new Date(o.createdAt).toLocaleString() : "-"}</small></p>
+          <p><small>${new Date(o.createdAt).toLocaleString()}</small></p>
         </div>
       `;
     });
 
   } catch (err) {
-    content.innerHTML = "<p style='color:red'>Access denied or server error</p>";
+    localStorage.removeItem("ADMIN_KEY");
     ADMIN_KEY = "";
+    content.innerHTML = "<p style='color:red'>Access denied</p>";
   }
 }
 
@@ -96,7 +94,7 @@ async function loadContacts() {
     clearUI("Contact Enquiries");
 
     const res = await fetch(`${API_BASE}/api/contacts`, {
-      headers: requireAdminKey()
+      headers: getAdminHeaders()
     });
 
     if (!res.ok) throw new Error("Unauthorized");
@@ -115,13 +113,14 @@ async function loadContacts() {
           <h4>${c.name}</h4>
           <p>${c.email}</p>
           <p>${c.message}</p>
-          <small>${c.createdAt ? new Date(c.createdAt).toLocaleString() : "-"}</small>
+          <small>${new Date(c.createdAt).toLocaleString()}</small>
         </div>
       `;
     });
 
   } catch (err) {
-    content.innerHTML = "<p style='color:red'>Access denied or server error</p>";
+    localStorage.removeItem("ADMIN_KEY");
     ADMIN_KEY = "";
+    content.innerHTML = "<p style='color:red'>Access denied</p>";
   }
 }

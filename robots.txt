@@ -1,3 +1,5 @@
 User-agent: *
+Disallow: /vs-dashboard-92k.html
+
 Allow: /
 Sitemap: https://vitaseed-frontend.github.io/sitemap.xml

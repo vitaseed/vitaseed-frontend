@@ -1,3 +1,17 @@
+(function adminGate() {
+  const key = prompt("Admin Access Key:");
+  if (!key) {
+    document.body.innerHTML = "<h2>Access Denied</h2>";
+    throw new Error("No admin key");
+  }
+
+  // Must match backend ADMIN_KEY
+  if (key !== "vitaseed_admin_123") {
+    document.body.innerHTML = "<h2>Unauthorized</h2>";
+    throw new Error("Invalid admin key");
+  }
+})();
+
 const API_BASE = "https://vitaseed-backend.onrender.com";
 const content = document.getElementById("adminContent");
 const title = document.getElementById("sectionTitle");

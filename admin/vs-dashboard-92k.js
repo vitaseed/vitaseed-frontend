@@ -1,16 +1,17 @@
-(function adminGate() {
-  const key = prompt("Admin Access Key:");
+function getAdminHeaders() {
+  let key = localStorage.getItem("ADMIN_KEY");
+
   if (!key) {
-    document.body.innerHTML = "<h2>Access Denied</h2>";
-    throw new Error("No admin key");
+    key = prompt("Enter Admin Key:");
+    localStorage.setItem("ADMIN_KEY", key);
   }
 
-  // Must match backend ADMIN_KEY
-  if (key !== "vitaseed_admin_123") {
-    document.body.innerHTML = "<h2>Unauthorized</h2>";
-    throw new Error("Invalid admin key");
-  }
-})();
+  return {
+    "x-admin-key": key,
+    "Content-Type": "application/json"
+  };
+}
+
 
 const API_BASE = "https://vitaseed-backend.onrender.com";
 const content = document.getElementById("adminContent");

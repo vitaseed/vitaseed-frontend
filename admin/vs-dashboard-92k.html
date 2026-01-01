@@ -27,6 +27,33 @@
   <p>© VitaSeed Admin</p>
 </footer>
 
+<!-- PRODUCT EDIT MODAL -->
+<div id="productModal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Edit Product</h3>
+
+    <input type="hidden" id="pId" />
+
+    <label>Name</label>
+    <input id="pName" />
+
+    <label>Price</label>
+    <input type="number" id="pPrice" />
+
+    <label>Stock</label>
+    <input type="number" id="pStock" />
+
+    <label>
+      <input type="checkbox" id="pActive" /> Active
+    </label>
+
+    <div class="modal-actions">
+      <button onclick="saveProduct()">Save</button>
+      <button onclick="closeProductModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script src="vs-dashboard-92k.js"></script>
 </body>
 </html>

@@ -55,6 +55,29 @@
     </div>
   </div>
 </div>
+  <!-- ADD PRODUCT MODAL -->
+<div id="addProductModal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Add Product</h3>
+
+    <label>Name</label>
+    <input id="newName" />
+
+    <label>Price</label>
+    <input type="number" id="newPrice" />
+
+    <label>Stock</label>
+    <input type="number" id="newStock" />
+
+    <label>Image</label>
+    <input type="file" id="newImage" />
+
+    <div class="modal-actions">
+      <button onclick="addProduct()">Add</button>
+      <button onclick="closeAddProductModal()">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <script src="admin.js"></script>
 </body>

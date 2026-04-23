@@ -191,3 +191,10 @@ function logout() {
   localStorage.removeItem("ADMIN_KEY");
   location.reload();
 }
+
+window.addEventListener("click", function(e) {
+  const modal = document.getElementById("productModal");
+  if (e.target === modal) {
+    closeProductModal();
+  }
+});

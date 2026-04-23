@@ -44,17 +44,18 @@ async function loadProducts() {
     return;
   }
 
-  data.forEach(p => {
-    content.innerHTML += `
-      <div class="card">
-        <h3>${p.name}</h3>
-        <p>₹${p.price}</p>
-        <p>Stock: ${p.stock ?? "-"}</p>
-        <p>Status: ${p.isActive ? "Active" : "Inactive"}</p>
-        <button onclick='openProductModal(${JSON.stringify(p)})'>Edit</button>
-      </div>
-    `;
-  });
+data.forEach(p => {
+  content.innerHTML += `
+    <div class="card">
+      ${p.image ? `<img src="${p.image}" style="width:100%; height:150px; object-fit:cover;" />` : ""}
+      <h3>${p.name}</h3>
+      <p>₹${p.price}</p>
+      <p>Stock: ${p.stock ?? "-"}</p>
+      <p>Status: ${p.isActive ? "Active" : "Inactive"}</p>
+      <button onclick='openProductModal(${JSON.stringify(p)})'>Edit</button>
+    </div>
+  `;
+});
 }
 
 /* ================= ORDERS ================= */

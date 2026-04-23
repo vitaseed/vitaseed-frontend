@@ -188,7 +188,7 @@ async function saveProduct() {
 loadProducts();
 
 function logout() {
-  localStorage.removeItem("ADMIN_KEY");
+  sessionStorage.removeItem("ADMIN_KEY");
   location.reload();
 }
 

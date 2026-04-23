@@ -102,6 +102,7 @@ async function updateOrderStatus(orderId, status) {
     method: "PATCH",
     headers: getAdminHeaders(),
     body: JSON.stringify({ status })
+    if (!confirm("Save changes?")) return;
   });
 
   loadOrders(); // 🔥 add this

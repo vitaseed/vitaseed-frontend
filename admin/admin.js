@@ -200,3 +200,11 @@ window.addEventListener("click", function(e) {
     closeProductModal();
   }
 });
+
+function openAddProductModal() {
+  document.getElementById("addProductModal").classList.remove("hidden");
+}
+
+function closeAddProductModal() {
+  document.getElementById("addProductModal").classList.add("hidden");
+}

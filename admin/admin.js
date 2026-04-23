@@ -98,16 +98,16 @@ async function loadOrders() {
 }
 
 async function updateOrderStatus(orderId, status) {
+  if (!confirm("Save changes?")) return;
+
   await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
     method: "PATCH",
     headers: getAdminHeaders(),
-    body: JSON.stringify({ status }),
-    if (!confirm("Save changes?")) return;
+    body: JSON.stringify({ status })
   });
 
-  loadOrders(); // 🔥 add this
+  loadOrders();
 }
-
 /* ================= CONTACTS ================= */
 async function loadContacts() {
   try {

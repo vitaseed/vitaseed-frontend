@@ -185,3 +185,9 @@ async function saveProduct() {
   closeProductModal();
   loadProducts();
 }
+loadProducts();
+
+function logout() {
+  localStorage.removeItem("ADMIN_KEY");
+  location.reload();
+}

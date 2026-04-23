@@ -95,7 +95,7 @@ async function loadOrders() {
     });
 
   } catch (err) {
-    localStorage.removeItem("ADMIN_KEY");
+    sessionStorage.removeItem("ADMIN_KEY");
     content.innerHTML = "<p style='color:red'>Access denied</p>";
   }
 }
@@ -142,7 +142,7 @@ async function loadContacts() {
     });
 
   } catch (err) {
-    localStorage.removeItem("ADMIN_KEY");
+    sessionStorage.removeItem("ADMIN_KEY");
     content.innerHTML = "<p style='color:red'>Access denied</p>";
   }
 }

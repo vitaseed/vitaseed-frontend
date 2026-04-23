@@ -29,7 +29,9 @@ function clearUI(text) {
 async function loadProducts() {
   clearUI("Products");
 
-  const res = await fetch(`${API_BASE}/api/products`);
+  const res = await fetch(`${API_BASE}/api/products`, {
+  headers: getAdminHeaders()
+});
   if (!res.ok) {
   throw new Error("Failed to fetch");
 }

@@ -4,7 +4,7 @@ const title = document.getElementById("sectionTitle");
 
 /* ---------- ADMIN HEADERS ---------- */
 function getAdminHeaders() {
-  let key = localStorage.getItem("ADMIN_KEY");
+  let key = sessionStorage.getItem("ADMIN_KEY");
 
   if (!key) {
     key = prompt("Enter Admin Key:");
@@ -101,7 +101,7 @@ async function updateOrderStatus(orderId, status) {
   await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
     method: "PATCH",
     headers: getAdminHeaders(),
-    body: JSON.stringify({ status })
+    body: JSON.stringify({ status }),
     if (!confirm("Save changes?")) return;
   });
 

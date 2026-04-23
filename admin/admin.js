@@ -10,7 +10,7 @@ function getAdminHeaders() {
     key = prompt("Enter Admin Key:");
     if (!key) throw new Error("Admin key required");
     key = key.trim();
-    localStorage.setItem("ADMIN_KEY", key);
+    sessionStorage.setItem("ADMIN_KEY", key);
   }
 
   return {
@@ -22,7 +22,7 @@ function getAdminHeaders() {
 /* ---------- UTIL ---------- */
 function clearUI(text) {
   title.textContent = text;
-  content.innerHTML = "<p>Loading...</p>";
+  content.innerHTML = "<div class='loader'></div>";
 }
 
 /* ================= PRODUCTS ================= */

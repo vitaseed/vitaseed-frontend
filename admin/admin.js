@@ -30,6 +30,9 @@ async function loadProducts() {
   clearUI("Products");
 
   const res = await fetch(`${API_BASE}/api/products`);
+  if (!res.ok) {
+  throw new Error("Failed to fetch");
+}
   const data = await res.json();
 
   content.innerHTML = "";
@@ -100,6 +103,8 @@ async function updateOrderStatus(orderId, status) {
     headers: getAdminHeaders(),
     body: JSON.stringify({ status })
   });
+
+  loadOrders(); // 🔥 add this
 }
 
 /* ================= CONTACTS ================= */

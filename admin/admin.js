@@ -208,3 +208,44 @@ function openAddProductModal() {
 function closeAddProductModal() {
   document.getElementById("addProductModal").classList.add("hidden");
 }
+
+async function addProduct() {
+  const name = document.getElementById("newName").value;
+  const price = Number(document.getElementById("newPrice").value);
+  const stock = Number(document.getElementById("newStock").value);
+  const file = document.getElementById("newImage").files[0];
+
+  if (!name || !price || !file) {
+    alert("Fill all required fields");
+    return;
+  }
+
+  // Upload image
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const uploadRes = await fetch(`${API_BASE}/api/products/upload`, {
+    method: "POST",
+    headers: {
+      "x-admin-key": sessionStorage.getItem("ADMIN_KEY")
+    },
+    body: formData
+  });
+
+  const uploadData = await uploadRes.json();
+
+  // Save product
+  await fetch(`${API_BASE}/api/products`, {
+    method: "POST",
+    headers: getAdminHeaders(),
+    body: JSON.stringify({
+      name,
+      price,
+      stock,
+      image: uploadData.url
+    })
+  });
+
+  closeAddProductModal();
+  loadProducts();
+}

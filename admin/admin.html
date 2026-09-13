@@ -3,36 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VitaSeed Admin</title>
+  <title>The Gami Co. | Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin.css" />
 </head>
-<body>
+<body class="admin-body">
+  <div class="announce">Private workspace · The Gami Co.</div>
 
-<header class="admin-header">
-  <h1>VitaSeed Admin Panel</h1>
-</header>
+  <header class="wrap admin-header">
+    <a class="brand" href="../index.html">The Gami Co.</a>
+    <nav class="admin-nav" aria-label="Admin navigation">
+      <button type="button" onclick="loadProducts()">Products</button>
+      <button type="button" onclick="loadOrders()">Orders</button>
+      <button type="button" onclick="loadContacts()">Enquiries</button>
+      <button type="button" class="btn-ghost" onclick="logout()">Log out</button>
+    </nav>
+  </header>
 
-<nav class="admin-nav">
-  <button onclick="loadProducts()">Products</button>
-  <button onclick="loadOrders()">Orders</button>
-  <button onclick="loadContacts()">Contacts</button>
-  <button onclick="openAddProductModal()">Add Product</button>
-</nav>
+  <main>
+    <section class="wrap shop-head">
+      <p class="eyebrow">Admin workspace</p>
+      <h1 id="sectionTitle">Products</h1>
+      <p>Manage your collection, orders, and customer enquiries from one place.</p>
+    </section>
 
-<main>
-  <h2 id="sectionTitle">Dashboard</h2>
-  <div id="adminContent" class="card-grid"></div>
-</main>
+    <section class="wrap admin-layout">
+      <div class="panel admin-intro">
+        <p class="eyebrow">Quick action</p>
+        <h2>Add a new pack</h2>
+        <p>Keep the collection current with a new product and image.</p>
+        <button class="btn" type="button" onclick="openAddProductModal()">Add product</button>
+      </div>
+      <div>
+        <div class="admin-toolbar">
+          <h2>Current products</h2>
+          <button class="btn-ghost" type="button" onclick="loadProducts()">Refresh</button>
+        </div>
+        <div id="adminContent" class="card-grid"></div>
+      </div>
+    </section>
+  </main>
 
-<footer>
-  <p>© VitaSeed Admin</p>
-  <button onclick="logout()">Logout</button>
-</footer>
+  <footer><div class="wrap footer-row"><span>The Gami Co. admin</span><a href="../index.html">Back to site</a></div></footer>
 
-<!-- PRODUCT EDIT MODAL -->
-<div id="productModal" class="modal hidden">
-  <div class="modal-content">
-    <h3>Edit Product</h3>
+  <!-- PRODUCT EDIT MODAL -->
+  <div id="productModal" class="modal hidden">
+    <div class="modal-content">
+      <p class="eyebrow">Product details</p>
+      <h2>Edit product</h2>
 
     <input type="hidden" id="pId" />
 
@@ -49,16 +69,18 @@
       <input type="checkbox" id="pActive" /> Active
     </label>
 
-    <div class="modal-actions">
-      <button onclick="saveProduct()">Save</button>
-      <button onclick="closeProductModal()">Cancel</button>
+      <div class="modal-actions">
+        <button class="btn" type="button" onclick="saveProduct()">Save changes</button>
+        <button class="btn-ghost" type="button" onclick="closeProductModal()">Cancel</button>
+      </div>
     </div>
   </div>
-</div>
+
   <!-- ADD PRODUCT MODAL -->
-<div id="addProductModal" class="modal hidden">
-  <div class="modal-content">
-    <h3>Add Product</h3>
+  <div id="addProductModal" class="modal hidden">
+    <div class="modal-content">
+      <p class="eyebrow">New product</p>
+      <h2>Add product</h2>
 
     <label>Name</label>
     <input id="newName" />
@@ -72,12 +94,12 @@
     <label>Image</label>
     <input type="file" id="newImage" />
 
-    <div class="modal-actions">
-      <button onclick="addProduct()">Add</button>
-      <button onclick="closeAddProductModal()">Cancel</button>
+      <div class="modal-actions">
+        <button class="btn" type="button" onclick="addProduct()">Add product</button>
+        <button class="btn-ghost" type="button" onclick="closeAddProductModal()">Cancel</button>
+      </div>
     </div>
   </div>
-</div>
 
 <script src="admin.js"></script>
 </body>

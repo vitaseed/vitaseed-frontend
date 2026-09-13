@@ -1,6 +1,6 @@
-# VitaSeed 🌱
+# The Gami Co. 🌱
 
-VitaSeed is a nutrition-focused seed brand website built as a teaser/MVP.
+The Gami Co. is a nutrition-focused seed brand website built as a teaser/MVP.
 The project allows users to explore products and send enquiries.
 
 ## 🌿 Features

@@ -1,20 +1,19 @@
 const API_BASE = "https://vitaseed-backend.onrender.com";
 const content = document.getElementById("adminContent");
 const title = document.getElementById("sectionTitle");
+let adminKey = sessionStorage.getItem("ADMIN_KEY") || "";
 
 /* ---------- ADMIN HEADERS ---------- */
 function getAdminHeaders() {
-  let key = sessionStorage.getItem("ADMIN_KEY");
-
-  if (!key) {
-    key = prompt("Enter Admin Key:");
-    if (!key) throw new Error("Admin key required");
-    key = key.trim();
-    sessionStorage.setItem("ADMIN_KEY", key);
+  if (!adminKey) {
+    const enteredKey = prompt("Enter the backend Admin Key:");
+    if (!enteredKey) throw new Error("Admin key required");
+    adminKey = enteredKey.trim();
+    sessionStorage.setItem("ADMIN_KEY", adminKey);
   }
 
   return {
-    "x-admin-key": key,
+    "x-admin-key": adminKey,
     "Content-Type": "application/json"
   };
 }
@@ -25,37 +24,42 @@ function clearUI(text) {
   content.innerHTML = "<div class='loader'></div>";
 }
 
+async function getApiError(res) {
+  const body = await res.json().catch(() => ({}));
+  return body.error || body.message || `Request failed (${res.status})`;
+}
+
 /* ================= PRODUCTS ================= */
 async function loadProducts() {
-  clearUI("Products");
+  try {
+    clearUI("Products");
 
-  const res = await fetch(`${API_BASE}/api/products`, {
-  headers: getAdminHeaders()
-});
-  if (!res.ok) {
-  throw new Error("Failed to fetch");
-}
-  const data = await res.json();
+    // Products are public; only orders and mutations require the admin key.
+    const res = await fetch(`${API_BASE}/api/products`);
+    if (!res.ok) throw new Error(await getApiError(res));
+    const data = await res.json();
 
-  content.innerHTML = "";
+    content.innerHTML = "";
+    if (!data.length) {
+      content.innerHTML = "<p>No products found.</p>";
+      return;
+    }
 
-  if (!data.length) {
-    content.innerHTML = "<p>No products found.</p>";
-    return;
+    data.forEach(p => {
+      content.innerHTML += `
+        <div class="card">
+          ${p.image ? `<img src="${p.image}" alt="${p.name}" />` : ""}
+          <h3>${p.name}</h3>
+          <p>₹${p.price}</p>
+          <p>Stock: ${p.stock ?? "-"}</p>
+          <p>Status: ${p.isActive ? "Active" : "Inactive"}</p>
+          <button onclick='openProductModal(${JSON.stringify(p)})'>Edit</button>
+        </div>
+      `;
+    });
+  } catch (err) {
+    content.innerHTML = `<p class="admin-error">${err.message}</p>`;
   }
-
-data.forEach(p => {
-  content.innerHTML += `
-    <div class="card">
-      ${p.image ? `<img src="${p.image}" style="width:100%; height:150px; object-fit:cover;" />` : ""}
-      <h3>${p.name}</h3>
-      <p>₹${p.price}</p>
-      <p>Stock: ${p.stock ?? "-"}</p>
-      <p>Status: ${p.isActive ? "Active" : "Inactive"}</p>
-      <button onclick='openProductModal(${JSON.stringify(p)})'>Edit</button>
-    </div>
-  `;
-});
 }
 
 /* ================= ORDERS ================= */
@@ -67,7 +71,7 @@ async function loadOrders() {
       headers: getAdminHeaders()
     });
 
-    if (!res.ok) throw new Error("Unauthorized");
+    if (!res.ok) throw new Error(await getApiError(res));
 
     const data = await res.json();
     content.innerHTML = "";
@@ -95,8 +99,7 @@ async function loadOrders() {
     });
 
   } catch (err) {
-    sessionStorage.removeItem("ADMIN_KEY");
-    content.innerHTML = "<p style='color:red'>Access denied</p>";
+    content.innerHTML = `<p class="admin-error">${err.message}</p>`;
   }
 }
 
@@ -120,7 +123,7 @@ async function loadContacts() {
       headers: getAdminHeaders()
     });
 
-    if (!res.ok) throw new Error("Unauthorized");
+    if (!res.ok) throw new Error(await getApiError(res));
 
     const data = await res.json();
     content.innerHTML = "";
@@ -142,8 +145,7 @@ async function loadContacts() {
     });
 
   } catch (err) {
-    sessionStorage.removeItem("ADMIN_KEY");
-    content.innerHTML = "<p style='color:red'>Access denied</p>";
+    content.innerHTML = `<p class="admin-error">${err.message}</p>`;
   }
 }
 
@@ -191,6 +193,7 @@ async function saveProduct() {
 loadProducts();
 
 function logout() {
+  adminKey = "";
   sessionStorage.removeItem("ADMIN_KEY");
   location.reload();
 }
@@ -228,7 +231,7 @@ async function addProduct() {
   const uploadRes = await fetch(`${API_BASE}/api/products/upload`, {
     method: "POST",
     headers: {
-      "x-admin-key": sessionStorage.getItem("ADMIN_KEY")
+      "x-admin-key": getAdminHeaders()["x-admin-key"]
     },
     body: formData
   });

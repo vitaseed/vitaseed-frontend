@@ -164,3 +164,141 @@ document.addEventListener("DOMContentLoaded", () => {
   const productList = document.getElementById("product-list");
   if (productList) loadProducts();
 });
+
+/* ---------- STOREFRONT EXPERIENCE ---------- */
+const CART_KEY = "gami_cart";
+const USER_KEY = "gami_user";
+const USER_ORDERS_KEY = "gami_orders";
+
+function readStorage(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; }
+}
+
+function writeStorage(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+
+function getCart() { return readStorage(CART_KEY, []); }
+
+function saveCart(cart) {
+  writeStorage(CART_KEY, cart);
+  renderCart();
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>'"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character]));
+}
+
+function updateCartCount() {
+  const count = getCart().reduce((total, item) => total + item.quantity, 0);
+  document.querySelectorAll("[data-cart-count]").forEach(element => { element.textContent = count; });
+}
+
+function addToCart(product) {
+  const cart = getCart();
+  const existing = cart.find(item => item.id === product.id);
+  if (existing) existing.quantity += 1;
+  else cart.push({ id: product.id, name: product.name, price: Number(product.price), image: product.image || "", quantity: 1 });
+  saveCart(cart);
+  openCart();
+}
+
+function changeCartQuantity(id, amount) {
+  const cart = getCart().map(item => item.id === id ? { ...item, quantity: item.quantity + amount } : item).filter(item => item.quantity > 0);
+  saveCart(cart);
+}
+
+function renderCart() {
+  updateCartCount();
+  const list = document.querySelector("[data-cart-list]");
+  const totalElement = document.querySelector("[data-cart-total]");
+  if (!list) return;
+  const cart = getCart();
+  list.innerHTML = cart.length ? cart.map(item => `<div class="cart-item"><div><strong>${escapeHtml(item.name)}</strong><span>₹${item.price} each</span><div class="qty"><button type="button" data-quantity="${item.id}" data-change="-1">−</button><b>${item.quantity}</b><button type="button" data-quantity="${item.id}" data-change="1">+</button></div></div><strong>₹${item.price * item.quantity}</strong></div>`).join("") : "<p class='empty-state'>Your bag is waiting for something good.</p>";
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  if (totalElement) totalElement.textContent = `₹${total}`;
+}
+
+function openCart() { document.querySelector(".backdrop")?.classList.add("open"); document.querySelector(".cart-drawer")?.classList.add("open"); }
+function closeCart() { document.querySelector(".backdrop")?.classList.remove("open"); document.querySelector(".cart-drawer")?.classList.remove("open"); }
+
+async function fetchProductsForStore() {
+  const response = await fetch(`${API_BASE}/api/products`);
+  if (!response.ok) throw new Error("We could not load the collection.");
+  return response.json();
+}
+
+function renderStoreProducts(products, container) {
+  container.innerHTML = products.length ? products.map(product => `<article class="store-card"><div class="store-image">${product.image ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" />` : "<span>Gami Co.</span>"}</div><div class="store-card-body"><p class="eyebrow">Kitchen staple</p><h3>${escapeHtml(product.name)}</h3><p>Carefully packed nutrition seeds for everyday use.</p><div class="store-card-row"><strong>₹${Number(product.price)}</strong><button class="btn" type="button" data-add-product="${escapeHtml(product.id)}">Add to bag</button></div></div></article>`).join("") : "<p class='empty-state'>No products match that search.</p>";
+  container.querySelectorAll("[data-add-product]").forEach(button => button.addEventListener("click", () => { const product = products.find(item => String(item.id) === button.dataset.addProduct); if (product) addToCart(product); }));
+}
+
+async function initStorePage() {
+  const container = document.getElementById("shop-product-list");
+  if (!container) return;
+  let products = [];
+  try { products = await fetchProductsForStore(); } catch (error) { container.innerHTML = `<p class="admin-error">${error.message}</p>`; return; }
+  const update = () => {
+    const term = (document.getElementById("productSearch")?.value || "").toLowerCase();
+    const sort = document.getElementById("productSort")?.value;
+    const visible = products.filter(product => product.name.toLowerCase().includes(term)).sort((a, b) => sort === "low" ? a.price - b.price : sort === "high" ? b.price - a.price : 0);
+    renderStoreProducts(visible, container);
+  };
+  document.getElementById("productSearch")?.addEventListener("input", update);
+  document.getElementById("productSort")?.addEventListener("change", update);
+  update();
+}
+
+async function submitCheckout() {
+  const cart = getCart();
+  if (!cart.length) return;
+  const user = readStorage(USER_KEY, null);
+  if (!user) { window.location.href = "login.html?return=shop.html"; return; }
+  const button = document.querySelector("[data-checkout]");
+  if (button) button.disabled = true;
+  try {
+    for (const item of cart) {
+      const response = await fetch(`${API_BASE}/api/orders`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: item.id, quantity: item.quantity, customerEmail: user.email }) });
+      if (!response.ok) throw new Error("Your order could not be sent.");
+    }
+    const orders = readStorage(USER_ORDERS_KEY, []);
+    orders.unshift({ id: `local-${Date.now()}`, createdAt: new Date().toISOString(), status: "pending", items: cart, total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0) });
+    writeStorage(USER_ORDERS_KEY, orders);
+    saveCart([]);
+    alert("Thanks. Your order has been sent for confirmation.");
+  } catch (error) { alert(error.message); } finally { if (button) button.disabled = false; }
+}
+
+function initAuthPages() {
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  if (registerForm) registerForm.addEventListener("submit", event => { event.preventDefault(); writeStorage(USER_KEY, { name: document.getElementById("registerName").value.trim(), email: document.getElementById("registerEmail").value.trim().toLowerCase(), note: "" }); window.location.href = "profile.html"; });
+  if (loginForm) loginForm.addEventListener("submit", event => { event.preventDefault(); const user = readStorage(USER_KEY, null); const email = document.getElementById("loginEmail").value.trim().toLowerCase(); const message = document.getElementById("loginMessage"); if (!user || user.email !== email) { message.textContent = "No account found for that email. Create an account first."; message.className = "form-message error-text"; return; } window.location.href = new URLSearchParams(window.location.search).get("return") || "profile.html"; });
+}
+
+function initProfilePage() {
+  const form = document.getElementById("profileForm");
+  if (!form) return;
+  const user = readStorage(USER_KEY, null);
+  if (!user) { window.location.href = "login.html?return=profile.html"; return; }
+  document.getElementById("profileTitle").textContent = `Hello, ${user.name.split(" ")[0]}`;
+  document.getElementById("profileName").value = user.name;
+  document.getElementById("profileEmail").value = user.email;
+  document.getElementById("profileNote").value = user.note || "";
+  form.addEventListener("submit", event => { event.preventDefault(); writeStorage(USER_KEY, { ...user, name: document.getElementById("profileName").value.trim(), note: document.getElementById("profileNote").value.trim() }); document.getElementById("profileMessage").textContent = "Your details are saved."; });
+}
+
+function initOrdersPage() {
+  const list = document.getElementById("ordersList");
+  if (!list) return;
+  if (!readStorage(USER_KEY, null)) { window.location.href = "login.html?return=orders.html"; return; }
+  const orders = readStorage(USER_ORDERS_KEY, []);
+  list.innerHTML = orders.length ? orders.map(order => `<article class="order-card"><div><p class="eyebrow">${new Date(order.createdAt).toLocaleDateString()}</p><h2>Order ${escapeHtml(order.id.slice(-6))}</h2><p>${order.items.map(item => `${item.quantity} × ${escapeHtml(item.name)}`).join(" · ")}</p></div><div class="order-meta"><span class="status">${escapeHtml(order.status)}</span><strong>₹${order.total}</strong></div></article>`).join("") : "<div class='panel empty-state'><h2>No orders yet.</h2><p>Your next favourite is waiting in the shop.</p><a class='btn' href='shop.html'>Browse seeds</a></div>";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("[data-open-cart]").forEach(button => button.addEventListener("click", openCart));
+  document.querySelectorAll("[data-close-cart]").forEach(button => button.addEventListener("click", closeCart));
+  document.addEventListener("click", event => { const quantityButton = event.target.closest("[data-quantity]"); if (quantityButton) changeCartQuantity(quantityButton.dataset.quantity, Number(quantityButton.dataset.change)); });
+  document.querySelector("[data-checkout]")?.addEventListener("click", submitCheckout);
+  document.querySelectorAll("[data-logout]").forEach(button => button.addEventListener("click", () => { localStorage.removeItem(USER_KEY); window.location.href = "index.html"; }));
+  renderCart(); initStorePage(); initAuthPages(); initProfilePage(); initOrdersPage();
+});

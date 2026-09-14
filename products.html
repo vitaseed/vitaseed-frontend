@@ -1,39 +1,117 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>The Gami Co. – Products</title>
-  <link rel="stylesheet" href="css/style.css">
-  <!-- Primary Meta Tags -->
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="The Gami Co. provides high-quality nutrition seeds for healthy living. Explore our products and contact us today.">
-<meta name="keywords" content="The Gami Co., nutrition seeds, healthy living, organic seeds">
-<meta name="author" content="The Gami Co.">
-
-<!-- Open Graph / Social Media -->
-<meta property="og:title" content="The Gami Co. | Nutrition Seeds">
-<meta property="og:description" content="High-quality nutrition seeds for healthy plants and gardens.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://vitaseed-frontend.github.io/">
-<meta property="og:image" content="assets/logo.png">
-
-<!-- Favicon -->
-<link rel="icon" href="assets/logo.png" type="image/png">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Products | The Gami Co.</title>
+  <meta
+    name="description"
+    content="Explore our collection of premium nutrition seeds. Shop high-quality, freshly packed seeds for healthy living."
+  />
+  <meta name="keywords" content="nutrition seeds, organic seeds, healthy living, premium seeds" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
-<body onload="loadProducts()">
+<body>
+  <div class="announce">Small-batch nutrition seeds, packed fresh for your kitchen</div>
 
-<h1>Our Nutrition Seeds</h1>
+  <header class="wrap nav">
+    <a class="brand" href="index.html">The Gami Co.</a>
+    <nav class="nav-links" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
 
-<div id="product-list"></div>
+  <main>
+    <section class="wrap page-head">
+      <p class="eyebrow">Our collection</p>
+      <h1>Premium nutrition seeds</h1>
+      <p>Carefully selected and freshly packed seeds to elevate your everyday meals and routines.</p>
+    </section>
 
-<script src="js/main.js"></script>
-<footer style="text-align:center; padding:20px; font-size:0.85rem; color:#666;">
-  © The Gami Co. · Nutrition Seeds · Enquiries Open
-</footer>
+    <section class="wrap" style="padding: 56px 0;">
+      <div class="shop-toolbar">
+        <div class="search-field">
+          <label for="productSearch">Search</label>
+          <input
+            type="text"
+            id="productSearch"
+            placeholder="Find a seed..."
+            aria-label="Search products"
+          />
+        </div>
+        <div class="sort-field">
+          <label for="productSort">Sort</label>
+          <select id="productSort" aria-label="Sort products">
+            <option value="">Newest</option>
+            <option value="low">Price: Low to High</option>
+            <option value="high">Price: High to Low</option>
+          </select>
+        </div>
+      </div>
 
+      <div id="product-list" class="shop-grid">
+        <p class="loading">
+          <span class="spinner" style="display: inline-block; margin-right: 10px;"></span>
+          Loading our seeds...
+        </p>
+      </div>
+    </section>
+
+    <section class="section alt" style="padding: 56px 0;">
+      <div class="wrap">
+        <h2>Why shop with us</h2>
+        <div class="grid-3">
+          <div class="panel">
+            <p class="eyebrow">Premium Quality</p>
+            <h3>Carefully selected</h3>
+            <p>Every seed is hand-picked and tested for quality and freshness.</p>
+          </div>
+          <div class="panel">
+            <p class="eyebrow">Fresh Delivery</p>
+            <h3>Sealed tight</h3>
+            <p>Our packing keeps seeds dry and ready to use for months.</p>
+          </div>
+          <div class="panel">
+            <p class="eyebrow">Expert Care</p>
+            <h3>Always fresh</h3>
+            <p>Small batches mean you get the freshest seeds available.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-grid">
+      <div>
+        <strong>The Gami Co.</strong>
+        <p>Premium nutrition seeds for healthy living, delivered fresh to your home.</p>
+      </div>
+      <div>
+        <a href="index.html" style="color: var(--forest); text-decoration: none; font-weight: 700;">Home</a
+        ><br />
+        <a href="shop.html" style="color: var(--forest); text-decoration: none; font-weight: 700;">Shop</a
+        ><br />
+        <a href="about.html" style="color: var(--forest); text-decoration: none; font-weight: 700;">About</a
+        ><br />
+        <a href="contact.html" style="color: var(--forest); text-decoration: none; font-weight: 700;">Contact</a>
+      </div>
+      <div>
+        <p style="margin: 0; font-size: .9rem;">© 2025 The Gami Co. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/toast.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
-
-
-

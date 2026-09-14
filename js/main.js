@@ -96,7 +96,7 @@ async function submitContactForm(e) {
 
   const payload = { name: name.trim(), email: email.trim(), message: message.trim() };
 
-  // --- DEBUG LOGGING: show exactly what's being sent ---
+  // --- DEBUG LOGGING ---
   console.log("Contact form: sending payload to", `${API_BASE}/api/contacts`);
   console.log("Payload:", payload);
 
@@ -128,7 +128,7 @@ async function submitContactForm(e) {
 
     // Success path: handle JSON, text or 204
     const ct = res.headers.get("content-type") || "";
-    let successMessage = "Thanks! We’ve received your enquiry.";
+    let successMessage = "Thanks! We've received your enquiry.";
     if (res.status === 204 || !ct) {
       // nothing to parse
     } else if (ct.includes("application/json")) {
@@ -143,7 +143,7 @@ async function submitContactForm(e) {
       }
     }
 
-    setStatus("Thanks! We’ve received your enquiry. Our team will respond soon.");
+    setStatus("Thanks! We've received your enquiry. Our team will respond soon.");
     e.target.reset();
   } catch (err) {
     console.error("Contact submit failed (caught):", err);
@@ -212,7 +212,7 @@ function renderCart() {
   const totalElement = document.querySelector("[data-cart-total]");
   if (!list) return;
   const cart = getCart();
-  list.innerHTML = cart.length ? cart.map(item => `<div class="cart-item"><div><strong>${escapeHtml(item.name)}</strong><span>₹${item.price} each</span><div class="qty"><button type="button" data-quantity="${item.id}" data-change="-1">−</button><b>${item.quantity}</b><button type="button" data-quantity="${item.id}" data-change="1">+</button></div></div><strong>₹${item.price * item.quantity}</strong></div>`).join("") : "<p class='empty-state'>Your bag is waiting for something good.</p>";
+  list.innerHTML = cart.length ? cart.map(item => `<div class="cart-item"><div><strong>${escapeHtml(item.name)}</strong><span>₹${item.price} each</span><div class="qty"><button type="button" data-quantity="${item.id}" data-amount="-1">−</button><span>${item.quantity}</span><button type="button" data-quantity="${item.id}" data-amount="1">+</button></div></div><button type="button" onclick="changeCartQuantity('${item.id}', -${item.quantity})">Remove</button></div>`).join("") : "<p>Your cart is empty</p>";
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   if (totalElement) totalElement.textContent = `₹${total}`;
 }
@@ -227,7 +227,7 @@ async function fetchProductsForStore() {
 }
 
 function renderStoreProducts(products, container) {
-  container.innerHTML = products.length ? products.map(product => `<article class="store-card"><div class="store-image">${product.image ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" />` : "<span>Gami Co.</span>"}</div><div class="store-card-body"><p class="eyebrow">Kitchen staple</p><h3>${escapeHtml(product.name)}</h3><p>Carefully packed nutrition seeds for everyday use.</p><div class="store-card-row"><strong>₹${Number(product.price)}</strong><button class="btn" type="button" data-add-product="${escapeHtml(product.id)}">Add to bag</button></div></div></article>`).join("") : "<p class='empty-state'>No products match that search.</p>";
+  container.innerHTML = products.length ? products.map(product => `<article class="store-card"><div class="store-image">${product.image ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" />` : ""}</div><h3>${escapeHtml(product.name)}</h3><p class="price">₹${product.price}</p><button type="button" class="btn" data-add-product="${product.id}">Add to cart</button></article>`).join("") : "<p>No products available</p>";
   container.querySelectorAll("[data-add-product]").forEach(button => button.addEventListener("click", () => { const product = products.find(item => String(item.id) === button.dataset.addProduct); if (product) addToCart(product); }));
 }
 
@@ -256,7 +256,7 @@ async function submitCheckout() {
   if (button) button.disabled = true;
   try {
     for (const item of cart) {
-      const response = await fetch(`${API_BASE}/api/orders`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: item.id, quantity: item.quantity, customerEmail: user.email }) });
+      const response = await fetch(`${API_BASE}/api/orders`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: item.id, quantity: item.quantity, userId: user.id }) });
       if (!response.ok) throw new Error("Your order could not be sent.");
     }
     const orders = readStorage(USER_ORDERS_KEY, []);
@@ -270,8 +270,8 @@ async function submitCheckout() {
 function initAuthPages() {
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
-  if (registerForm) registerForm.addEventListener("submit", event => { event.preventDefault(); writeStorage(USER_KEY, { name: document.getElementById("registerName").value.trim(), email: document.getElementById("registerEmail").value.trim().toLowerCase(), note: "" }); window.location.href = "profile.html"; });
-  if (loginForm) loginForm.addEventListener("submit", event => { event.preventDefault(); const user = readStorage(USER_KEY, null); const email = document.getElementById("loginEmail").value.trim().toLowerCase(); const message = document.getElementById("loginMessage"); if (!user || user.email !== email) { message.textContent = "No account found for that email. Create an account first."; message.className = "form-message error-text"; return; } window.location.href = new URLSearchParams(window.location.search).get("return") || "profile.html"; });
+  if (registerForm) registerForm.addEventListener("submit", event => { event.preventDefault(); writeStorage(USER_KEY, { name: document.getElementById("registerName").value.trim(), email: document.getElementById("registerEmail").value.trim(), id: `user-${Date.now()}` }); window.location.href = "shop.html"; });
+  if (loginForm) loginForm.addEventListener("submit", event => { event.preventDefault(); const user = readStorage(USER_KEY, null); const email = document.getElementById("loginEmail").value.trim(); if (!user || user.email !== email) { alert("User not found or email incorrect"); return; } const returnPage = new URLSearchParams(window.location.search).get("return") || "shop.html"; window.location.href = returnPage; });
 }
 
 function initProfilePage() {
@@ -283,7 +283,7 @@ function initProfilePage() {
   document.getElementById("profileName").value = user.name;
   document.getElementById("profileEmail").value = user.email;
   document.getElementById("profileNote").value = user.note || "";
-  form.addEventListener("submit", event => { event.preventDefault(); writeStorage(USER_KEY, { ...user, name: document.getElementById("profileName").value.trim(), note: document.getElementById("profileNote").value.trim() }); document.getElementById("profileMessage").textContent = "Your details are saved."; });
+  form.addEventListener("submit", event => { event.preventDefault(); writeStorage(USER_KEY, { ...user, name: document.getElementById("profileName").value.trim(), note: document.getElementById("profileNote").value.trim() }); alert("Profile updated"); });
 }
 
 function initOrdersPage() {
@@ -291,13 +291,13 @@ function initOrdersPage() {
   if (!list) return;
   if (!readStorage(USER_KEY, null)) { window.location.href = "login.html?return=orders.html"; return; }
   const orders = readStorage(USER_ORDERS_KEY, []);
-  list.innerHTML = orders.length ? orders.map(order => `<article class="order-card"><div><p class="eyebrow">${new Date(order.createdAt).toLocaleDateString()}</p><h2>Order ${escapeHtml(order.id.slice(-6))}</h2><p>${order.items.map(item => `${item.quantity} × ${escapeHtml(item.name)}`).join(" · ")}</p></div><div class="order-meta"><span class="status">${escapeHtml(order.status)}</span><strong>₹${order.total}</strong></div></article>`).join("") : "<div class='panel empty-state'><h2>No orders yet.</h2><p>Your next favourite is waiting in the shop.</p><a class='btn' href='shop.html'>Browse seeds</a></div>";
+  list.innerHTML = orders.length ? orders.map(order => `<article class="order-card"><div><p class="eyebrow">${new Date(order.createdAt).toLocaleDateString()}</p><h2>Order ${escapeHtml(order.id.slice(0, 8))}</h2><p>Status: <strong>${order.status}</strong></p><p>Total: ₹${order.total}</p></div><button type="button" onclick="alert('Contact support for modifications')">Modify</button></article>`).join("") : "<p>No orders yet</p>";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-open-cart]").forEach(button => button.addEventListener("click", openCart));
   document.querySelectorAll("[data-close-cart]").forEach(button => button.addEventListener("click", closeCart));
-  document.addEventListener("click", event => { const quantityButton = event.target.closest("[data-quantity]"); if (quantityButton) changeCartQuantity(quantityButton.dataset.quantity, Number(quantityButton.dataset.change)); });
+  document.addEventListener("click", event => { const quantityButton = event.target.closest("[data-quantity]"); if (quantityButton) changeCartQuantity(quantityButton.dataset.quantity, Number(quantityButton.dataset.amount)); });
   document.querySelector("[data-checkout]")?.addEventListener("click", submitCheckout);
   document.querySelectorAll("[data-logout]").forEach(button => button.addEventListener("click", () => { localStorage.removeItem(USER_KEY); window.location.href = "index.html"; }));
   renderCart(); initStorePage(); initAuthPages(); initProfilePage(); initOrdersPage();

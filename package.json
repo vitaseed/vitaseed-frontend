@@ -1,7 +1,16 @@
 {
-  "owner": "vitaseed",
-  "repo": "vitaseed-frontend",
-  "path": "package.json",
-  "message": "Add package.json for Render deployment",
-  "content": "{\n  \"name\": \"vitaseed-frontend\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Frontend files for VitaSeed\",\n  \"main\": \"index.js\",\n  \"scripts\": {\n    \"start\": \"node server.js\",\n    \"build\": \"echo 'Build complete'\"\n  },\n  \"dependencies\": {\n    \"express\": \"^4.18.2\",\n    \"cors\": \"^2.8.5\"\n  },\n  \"devDependencies\": {},\n  \"engines\": {\n    \"node\": \"18.x\"\n  }\n}\n"
+  "name": "vitaseed-frontend",
+  "version": "1.0.0",
+  "description": "Frontend files for VitaSeed",
+  "scripts": {
+    "start": "node server.js",
+    "build": "echo 'Build complete'"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": "18.x"
+  }
 }

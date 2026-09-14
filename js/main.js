@@ -1,45 +1,125 @@
 const API_BASE = "https://vitaseed-backend.onrender.com";
 
-/* ---------- UTIL ---------- */
-function setStatus(text, isError = false) {
-  const el = document.getElementById("status");
-  if (!el) return;
-  el.textContent = text;
-  el.style.color = isError ? "crimson" : "";
-}
+/* ---------- CONTACT FORM ---------- */
+async function submitContactForm(e) {
+  e.preventDefault();
 
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const submitBtn = document.getElementById("contactSubmit");
+  if (submitBtn) submitBtn.disabled = true;
+
+  const name = (document.getElementById("contact-name") || document.getElementById("name") || {}).value || "";
+  const email = (document.getElementById("contact-email") || document.getElementById("email") || {}).value || "";
+  const message = (document.getElementById("contact-message") || document.getElementById("message") || {}).value || "";
+
+  if (!name.trim() || !email.trim() || !message.trim()) {
+    toast.warning("Please fill in all fields", "Validation Error", 3000);
+    if (submitBtn) submitBtn.disabled = false;
+    return;
+  }
+
+  if (!validateEmail(email.trim())) {
+    toast.warning("Please enter a valid email address", "Invalid Email", 3000);
+    if (submitBtn) submitBtn.disabled = false;
+    return;
+  }
+
+  const payload = { name: name.trim(), email: email.trim(), message: message.trim() };
+
+  console.log("Contact form: sending payload to", `${API_BASE}/api/contacts`);
+  console.log("Payload:", payload);
+
+  loading.show("Sending your message...");
+
+  try {
+    const res = await fetch(`${API_BASE}/api/contacts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const ct = res.headers.get("content-type") || "";
+      let serverMsg = `Server returned ${res.status} ${res.statusText}`;
+      if (ct.includes("application/json")) {
+        const errJson = await res.json().catch(() => null);
+        console.error("Server responded with JSON error body:", errJson);
+        if (errJson) serverMsg = errJson.error || errJson.message || JSON.stringify(errJson);
+      } else {
+        const txt = await res.text().catch(() => "");
+        console.error("Server responded with text error body:", txt);
+        if (txt) serverMsg = txt;
+      }
+      throw new Error(serverMsg);
+    }
+
+    loading.hide();
+    toast.success("Thank you! We've received your enquiry and will respond soon.", "Message Sent", 4000);
+    e.target.reset();
+  } catch (err) {
+    console.error("Contact submit failed (caught):", err);
+    loading.hide();
+    toast.error(err.message || "Failed to send message. Please try again.", "Send Failed", 4000);
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
 }
 
 /* ---------- LOAD PRODUCTS ---------- */
 async function loadProducts() {
   try {
     const res = await fetch(`${API_BASE}/api/products`);
+    if (!res.ok) throw new Error("Failed to load products");
+    
     const products = await res.json();
-
     const container = document.getElementById("product-list");
     if (!container) return;
 
     container.innerHTML = "";
 
+    if (!products || products.length === 0) {
+      container.innerHTML = "<p class='loading'>No products available at the moment. Check back soon!</p>";
+      return;
+    }
+
     products.forEach(p => {
-      container.innerHTML += `
-        <div class="product-card">
-          <h3>${p.name}</h3>
-          <p>Price: ₹${p.price}</p>
-          <button onclick="orderNow('${p.id}')">Order</button>
+      const productHtml = `
+        <div class="store-card">
+          <div class="store-image">
+            ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" />` : '<span style="font-size: 3rem; color: var(--paper-deep);">🌱</span>'}
+          </div>
+          <div class="store-card-body">
+            <h3>${escapeHtml(p.name)}</h3>
+            <p class="price">₹${p.price}</p>
+            <div class="store-card-row">
+              <strong>Add to cart</strong>
+              <button type="button" class="btn btn-small" data-add-product="${p.id}">+</button>
+            </div>
+          </div>
         </div>
       `;
+      container.innerHTML += productHtml;
+    });
+
+    container.querySelectorAll("[data-add-product]").forEach(button => {
+      button.addEventListener("click", () => {
+        const product = products.find(item => String(item.id) === button.dataset.addProduct);
+        if (product) addToCart(product);
+      });
     });
   } catch (err) {
     console.error("Failed to load products", err);
+    const container = document.getElementById("product-list");
+    if (container) {
+      container.innerHTML = '<p class="loading">Unable to load products. Please try again later.</p>';
+    }
   }
 }
 
 /* ---------- PLACE ORDER ---------- */
 async function orderNow(productId) {
   const order = { productId, quantity: 1 };
+
+  loading.show("Processing order...");
 
   try {
     const res = await fetch(`${API_BASE}/api/orders`, {
@@ -53,106 +133,12 @@ async function orderNow(productId) {
       throw new Error(`Order failed: ${res.status} ${res.statusText} ${txt}`);
     }
 
-    const ct = res.headers.get("content-type") || "";
-    let message = "Order placed successfully";
-    if (res.status === 204 || !ct) {
-      // no body
-    } else if (ct.includes("application/json")) {
-      const data = await res.json().catch(() => ({}));
-      message = data.message || message;
-    } else {
-      message = await res.text().catch(() => message);
-    }
-
-    alert(message);
+    loading.hide();
+    toast.success("Order placed successfully! We'll process it shortly.", "Order Confirmed", 3000);
   } catch (err) {
     console.error("Order failed:", err);
-    alert("Order failed. See console for details.");
-  }
-}
-
-/* ---------- CONTACT FORM ---------- */
-async function submitContactForm(e) {
-  e.preventDefault();
-
-  const submitBtn = document.getElementById("contactSubmit");
-  if (submitBtn) submitBtn.disabled = true;
-  setStatus("Sending...");
-
-  const name = (document.getElementById("name") || {}).value || "";
-  const email = (document.getElementById("email") || {}).value || "";
-  const message = (document.getElementById("message") || {}).value || "";
-
-  if (!name.trim() || !email.trim() || !message.trim()) {
-    setStatus("All fields are required.", true);
-    if (submitBtn) submitBtn.disabled = false;
-    return;
-  }
-  if (!isValidEmail(email.trim())) {
-    setStatus("Please enter a valid email address.", true);
-    if (submitBtn) submitBtn.disabled = false;
-    return;
-  }
-
-  const payload = { name: name.trim(), email: email.trim(), message: message.trim() };
-
-  // --- DEBUG LOGGING ---
-  console.log("Contact form: sending payload to", `${API_BASE}/api/contacts`);
-  console.log("Payload:", payload);
-
-  try {
-    const res = await fetch(`${API_BASE}/api/contacts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    // If server rejects request, attempt to read body for diagnostics
-    if (!res.ok) {
-      const ct = res.headers.get("content-type") || "";
-      let serverMsg = `Server returned ${res.status} ${res.statusText}`;
-      if (ct.includes("application/json")) {
-        // try parse JSON error body
-        const errJson = await res.json().catch(() => null);
-        console.error("Server responded with JSON error body:", errJson);
-        if (errJson) serverMsg = errJson.error || errJson.message || JSON.stringify(errJson);
-      } else {
-        const txt = await res.text().catch(() => "");
-        console.error("Server responded with text error body:", txt);
-        if (txt) serverMsg = txt;
-      }
-      // surface server message in UI and console
-      setStatus(serverMsg, true);
-      throw new Error(serverMsg);
-    }
-
-    // Success path: handle JSON, text or 204
-    const ct = res.headers.get("content-type") || "";
-    let successMessage = "Thanks! We've received your enquiry.";
-    if (res.status === 204 || !ct) {
-      // nothing to parse
-    } else if (ct.includes("application/json")) {
-      const data = await res.json().catch(() => null);
-      console.log("Server success JSON:", data);
-      if (data && data.message) successMessage = data.message;
-    } else {
-      const text = await res.text().catch(() => "");
-      if (text) {
-        console.log("Server success text:", text);
-        successMessage = text;
-      }
-    }
-
-    setStatus("Thanks! We've received your enquiry. Our team will respond soon.");
-    e.target.reset();
-  } catch (err) {
-    console.error("Contact submit failed (caught):", err);
-    // err.message was already set to server message when possible
-    if (!document.getElementById("status").textContent) {
-      setStatus(err.message || "Failed to send message. See console for details.", true);
-    }
-  } finally {
-    if (submitBtn) submitBtn.disabled = false;
+    loading.hide();
+    toast.error(err.message || "Order failed. Please try again.", "Order Error", 4000);
   }
 }
 
@@ -163,6 +149,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const productList = document.getElementById("product-list");
   if (productList) loadProducts();
+
+  // Initialize storefront
+  renderCart();
+  initStorePage();
+  initAuthPages();
+  initProfilePage();
+  initOrdersPage();
+
+  // Setup cart and navigation
+  document.querySelectorAll("[data-open-cart]").forEach(button => button.addEventListener("click", openCart));
+  document.querySelectorAll("[data-close-cart]").forEach(button => button.addEventListener("click", closeCart));
+  document.addEventListener("click", event => {
+    const quantityButton = event.target.closest("[data-quantity]");
+    if (quantityButton) changeCartQuantity(quantityButton.dataset.quantity, Number(quantityButton.dataset.amount));
+  });
+  document.querySelector("[data-checkout]")?.addEventListener("click", submitCheckout);
+  document.querySelectorAll("[data-logout]").forEach(button => button.addEventListener("click", () => {
+    localStorage.removeItem(USER_KEY);
+    toast.info("You've been logged out", "Goodbye!", 2000);
+    setTimeout(() => { window.location.href = "index.html"; }, 1000);
+  }));
 });
 
 /* ---------- STOREFRONT EXPERIENCE ---------- */
@@ -198,6 +205,7 @@ function addToCart(product) {
   if (existing) existing.quantity += 1;
   else cart.push({ id: product.id, name: product.name, price: Number(product.price), image: product.image || "", quantity: 1 });
   saveCart(cart);
+  toast.success(`Added "${product.name}" to your bag`, "Added to Cart", 2000);
   openCart();
 }
 
@@ -212,7 +220,7 @@ function renderCart() {
   const totalElement = document.querySelector("[data-cart-total]");
   if (!list) return;
   const cart = getCart();
-  list.innerHTML = cart.length ? cart.map(item => `<div class="cart-item"><div><strong>${escapeHtml(item.name)}</strong><span>₹${item.price} each</span><div class="qty"><button type="button" data-quantity="${item.id}" data-amount="-1">−</button><span>${item.quantity}</span><button type="button" data-quantity="${item.id}" data-amount="1">+</button></div></div><button type="button" onclick="changeCartQuantity('${item.id}', -${item.quantity})">Remove</button></div>`).join("") : "<p>Your cart is empty</p>";
+  list.innerHTML = cart.length ? cart.map(item => `<div class="cart-item"><div><strong>${escapeHtml(item.name)}</strong><span>₹${item.price} each</span><div class="qty"><button type="button" data-quantity="${item.id}" data-amount="-1">−</button><span>${item.quantity}</span><button type="button" data-quantity="${item.id}" data-amount="1">+</button></div></div><button type="button" class="btn-ghost" onclick="changeCartQuantity('${item.id}', -${item.quantity})">Remove</button></div>`).join("") : "<p style='text-align: center; color: var(--muted);'>Your bag is empty</p>";
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   if (totalElement) totalElement.textContent = `₹${total}`;
 }
@@ -227,7 +235,7 @@ async function fetchProductsForStore() {
 }
 
 function renderStoreProducts(products, container) {
-  container.innerHTML = products.length ? products.map(product => `<article class="store-card"><div class="store-image">${product.image ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" />` : ""}</div><h3>${escapeHtml(product.name)}</h3><p class="price">₹${product.price}</p><button type="button" class="btn" data-add-product="${product.id}">Add to cart</button></article>`).join("") : "<p>No products available</p>";
+  container.innerHTML = products.length ? products.map(product => `<div class="store-card"><div class="store-image">${product.image ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" />` : '<span style="font-size: 3rem; color: var(--paper-deep);">🌱</span>'}</div><div class="store-card-body"><h3>${escapeHtml(product.name)}</h3><p class="price">₹${product.price}</p><div class="store-card-row"><strong style="flex: 1;"></strong><button type="button" class="btn btn-small" data-add-product="${product.id}">Add +</button></div></div></div>`).join("") : "<p style='text-align: center; color: var(--muted); grid-column: 1/-1;'>No products match your search</p>";
   container.querySelectorAll("[data-add-product]").forEach(button => button.addEventListener("click", () => { const product = products.find(item => String(item.id) === button.dataset.addProduct); if (product) addToCart(product); }));
 }
 
@@ -235,7 +243,7 @@ async function initStorePage() {
   const container = document.getElementById("shop-product-list");
   if (!container) return;
   let products = [];
-  try { products = await fetchProductsForStore(); } catch (error) { container.innerHTML = `<p class="admin-error">${error.message}</p>`; return; }
+  try { products = await fetchProductsForStore(); } catch (error) { container.innerHTML = `<p style='color: var(--error); grid-column: 1/-1;'>${error.message}</p>`; return; }
   const update = () => {
     const term = (document.getElementById("productSearch")?.value || "").toLowerCase();
     const sort = document.getElementById("productSort")?.value;
@@ -249,56 +257,100 @@ async function initStorePage() {
 
 async function submitCheckout() {
   const cart = getCart();
-  if (!cart.length) return;
+  if (!cart.length) {
+    toast.warning("Your bag is empty. Add some seeds first!", "Empty Cart", 2000);
+    return;
+  }
   const user = readStorage(USER_KEY, null);
-  if (!user) { window.location.href = "login.html?return=shop.html"; return; }
+  if (!user) { 
+    toast.info("Please log in to continue checkout", "Login Required", 2000);
+    setTimeout(() => { window.location.href = "login.html?return=shop.html"; }, 1000);
+    return; 
+  }
   const button = document.querySelector("[data-checkout]");
   if (button) button.disabled = true;
+  
+  loading.show("Processing your order...");
+  
   try {
     for (const item of cart) {
-      const response = await fetch(`${API_BASE}/api/orders`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: item.id, quantity: item.quantity, userId: user.id }) });
+      const response = await fetch(`${API_BASE}/api/orders`, { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify({ productId: item.id, quantity: item.quantity, userId: user.id }) 
+      });
       if (!response.ok) throw new Error("Your order could not be sent.");
     }
     const orders = readStorage(USER_ORDERS_KEY, []);
     orders.unshift({ id: `local-${Date.now()}`, createdAt: new Date().toISOString(), status: "pending", items: cart, total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0) });
     writeStorage(USER_ORDERS_KEY, orders);
     saveCart([]);
-    alert("Thanks. Your order has been sent for confirmation.");
-  } catch (error) { alert(error.message); } finally { if (button) button.disabled = false; }
+    loading.hide();
+    toast.success("Order confirmed! Check your profile for details.", "Order Placed", 4000);
+    setTimeout(() => { window.location.href = "orders.html"; }, 2000);
+  } catch (error) { 
+    loading.hide();
+    toast.error(error.message || "Checkout failed. Please try again.", "Checkout Error", 4000);
+  } finally { 
+    if (button) button.disabled = false; 
+  }
 }
 
 function initAuthPages() {
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
-  if (registerForm) registerForm.addEventListener("submit", event => { event.preventDefault(); writeStorage(USER_KEY, { name: document.getElementById("registerName").value.trim(), email: document.getElementById("registerEmail").value.trim(), id: `user-${Date.now()}` }); window.location.href = "shop.html"; });
-  if (loginForm) loginForm.addEventListener("submit", event => { event.preventDefault(); const user = readStorage(USER_KEY, null); const email = document.getElementById("loginEmail").value.trim(); if (!user || user.email !== email) { alert("User not found or email incorrect"); return; } const returnPage = new URLSearchParams(window.location.search).get("return") || "shop.html"; window.location.href = returnPage; });
+  if (registerForm) registerForm.addEventListener("submit", event => { 
+    event.preventDefault(); 
+    const name = document.getElementById("registerName")?.value.trim();
+    const email = document.getElementById("registerEmail")?.value.trim();
+    if (!name || !email || !validateEmail(email)) {
+      toast.warning("Please fill in all fields with a valid email", "Validation Error", 2000);
+      return;
+    }
+    writeStorage(USER_KEY, { name, email, id: `user-${Date.now()}` }); 
+    toast.success("Account created! Welcome to The Gami Co.", "Welcome!", 2000);
+    setTimeout(() => { window.location.href = "shop.html"; }, 1000);
+  });
+  if (loginForm) loginForm.addEventListener("submit", event => { 
+    event.preventDefault(); 
+    const user = readStorage(USER_KEY, null); 
+    const email = document.getElementById("loginEmail")?.value.trim();
+    if (!user || user.email !== email) { 
+      toast.error("User not found or email incorrect. Please register first.", "Login Failed", 3000);
+      return; 
+    }
+    const returnPage = new URLSearchParams(window.location.search).get("return") || "shop.html"; 
+    toast.success("Welcome back!", "Logged In", 1500);
+    setTimeout(() => { window.location.href = returnPage; }, 1000);
+  });
 }
 
 function initProfilePage() {
   const form = document.getElementById("profileForm");
   if (!form) return;
   const user = readStorage(USER_KEY, null);
-  if (!user) { window.location.href = "login.html?return=profile.html"; return; }
+  if (!user) { 
+    setTimeout(() => { window.location.href = "login.html?return=profile.html"; }, 500);
+    return; 
+  }
   document.getElementById("profileTitle").textContent = `Hello, ${user.name.split(" ")[0]}`;
   document.getElementById("profileName").value = user.name;
   document.getElementById("profileEmail").value = user.email;
   document.getElementById("profileNote").value = user.note || "";
-  form.addEventListener("submit", event => { event.preventDefault(); writeStorage(USER_KEY, { ...user, name: document.getElementById("profileName").value.trim(), note: document.getElementById("profileNote").value.trim() }); alert("Profile updated"); });
+  form.addEventListener("submit", event => { 
+    event.preventDefault(); 
+    writeStorage(USER_KEY, { ...user, name: document.getElementById("profileName").value.trim(), note: document.getElementById("profileNote").value.trim() }); 
+    toast.success("Your profile has been updated", "Profile Saved", 2000);
+  });
 }
 
 function initOrdersPage() {
   const list = document.getElementById("ordersList");
   if (!list) return;
-  if (!readStorage(USER_KEY, null)) { window.location.href = "login.html?return=orders.html"; return; }
+  if (!readStorage(USER_KEY, null)) { 
+    setTimeout(() => { window.location.href = "login.html?return=orders.html"; }, 500);
+    return; 
+  }
   const orders = readStorage(USER_ORDERS_KEY, []);
-  list.innerHTML = orders.length ? orders.map(order => `<article class="order-card"><div><p class="eyebrow">${new Date(order.createdAt).toLocaleDateString()}</p><h2>Order ${escapeHtml(order.id.slice(0, 8))}</h2><p>Status: <strong>${order.status}</strong></p><p>Total: ₹${order.total}</p></div><button type="button" onclick="alert('Contact support for modifications')">Modify</button></article>`).join("") : "<p>No orders yet</p>";
+  list.innerHTML = orders.length ? orders.map(order => `<article class="order-card"><div><h2 style="font-size: 1.1rem; margin: 0 0 8px;">Order ${escapeHtml(order.id.slice(0, 8))}</h2><p style="margin: 0 0 6px;"><span class="status">${order.status}</span></p><small style="color: var(--muted);">${new Date(order.createdAt).toLocaleDateString()}</small></div><div class="order-meta"><strong>₹${order.total}</strong></div></article>`).join("") : "<p style='text-align: center; color: var(--muted); padding: 40px 20px;'>No orders yet. <a href='shop.html' style='color: var(--forest); font-weight: 700;'>Start shopping</a></p>";
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll("[data-open-cart]").forEach(button => button.addEventListener("click", openCart));
-  document.querySelectorAll("[data-close-cart]").forEach(button => button.addEventListener("click", closeCart));
-  document.addEventListener("click", event => { const quantityButton = event.target.closest("[data-quantity]"); if (quantityButton) changeCartQuantity(quantityButton.dataset.quantity, Number(quantityButton.dataset.amount)); });
-  document.querySelector("[data-checkout]")?.addEventListener("click", submitCheckout);
-  document.querySelectorAll("[data-logout]").forEach(button => button.addEventListener("click", () => { localStorage.removeItem(USER_KEY); window.location.href = "index.html"; }));
-  renderCart(); initStorePage(); initAuthPages(); initProfilePage(); initOrdersPage();
-});

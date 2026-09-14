@@ -6,10 +6,11 @@ let adminKey = sessionStorage.getItem("ADMIN_KEY") || "";
 /* ---------- ADMIN HEADERS ---------- */
 function getAdminHeaders() {
   if (!adminKey) {
-    const enteredKey = prompt("Enter the backend Admin Key:");
-    if (!enteredKey) throw new Error("Admin key required");
+    const enteredKey = prompt("🔐 Enter the backend Admin Key:\n\n(Ask your team lead if you don't have this)");
+    if (!enteredKey) throw new Error("Admin key required to access this feature");
     adminKey = enteredKey.trim();
     sessionStorage.setItem("ADMIN_KEY", adminKey);
+    console.log("✓ Admin key saved to session");
   }
 
   return {
@@ -26,7 +27,16 @@ function clearUI(text) {
 
 async function getApiError(res) {
   const body = await res.json().catch(() => ({}));
-  return body.error || body.message || `Request failed (${res.status})`;
+  const error = body.error || body.message || `Request failed (${res.status})`;
+  
+  // Provide specific guidance for common errors
+  if (res.status === 401) {
+    return `${error}\n\n⚠️ Admin key is missing. Please enter a valid key.`;
+  }
+  if (res.status === 403) {
+    return `${error}\n\n⚠️ Admin key is invalid or expired.\n\nSteps:\n1. Contact your team lead\n2. Click "Log out" and try again\n3. Enter the correct admin key`;
+  }
+  return error;
 }
 
 /* ================= PRODUCTS ================= */
@@ -34,7 +44,7 @@ async function loadProducts() {
   try {
     clearUI("Products");
 
-    // Products are public; only orders and mutations require the admin key.
+    // Products are public; no admin key needed
     const res = await fetch(`${API_BASE}/api/products`);
     if (!res.ok) throw new Error(await getApiError(res));
     const data = await res.json();
@@ -59,6 +69,7 @@ async function loadProducts() {
     });
   } catch (err) {
     content.innerHTML = `<p class="admin-error">${err.message}</p>`;
+    console.error("Load Products Error:", err);
   }
 }
 
@@ -71,7 +82,10 @@ async function loadOrders() {
       headers: getAdminHeaders()
     });
 
-    if (!res.ok) throw new Error(await getApiError(res));
+    if (!res.ok) {
+      const errMsg = await getApiError(res);
+      throw new Error(errMsg);
+    }
 
     const data = await res.json();
     content.innerHTML = "";
@@ -84,7 +98,7 @@ async function loadOrders() {
     data.forEach(o => {
       content.innerHTML += `
         <div class="card">
-          <p><strong>${o.productName}</strong></p>
+          <p><strong>${o.productName || "Product"}</strong></p>
           <p>Qty: ${o.quantity}</p>
 
           <select onchange="updateOrderStatus('${o.id}', this.value)">
@@ -99,21 +113,31 @@ async function loadOrders() {
     });
 
   } catch (err) {
-    content.innerHTML = `<p class="admin-error">${err.message}</p>`;
+    content.innerHTML = `<p class="admin-error">
+      <strong>⚠️ Error loading orders:</strong><br/>
+      ${err.message.replace(/\n/g, "<br/>")}
+    </p>`;
+    console.error("Load Orders Error:", err);
   }
 }
 
 async function updateOrderStatus(orderId, status) {
   if (!confirm("Save changes?")) return;
 
-  await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
-    method: "PATCH",
-    headers: getAdminHeaders(),
-    body: JSON.stringify({ status })
-  });
+  try {
+    const res = await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
+      method: "PATCH",
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ status })
+    });
 
-  loadOrders();
+    if (!res.ok) throw new Error(await getApiError(res));
+    loadOrders();
+  } catch (err) {
+    alert(`❌ Failed to update order: ${err.message}`);
+  }
 }
+
 /* ================= CONTACTS ================= */
 async function loadContacts() {
   try {
@@ -123,13 +147,16 @@ async function loadContacts() {
       headers: getAdminHeaders()
     });
 
-    if (!res.ok) throw new Error(await getApiError(res));
+    if (!res.ok) {
+      const errMsg = await getApiError(res);
+      throw new Error(errMsg);
+    }
 
     const data = await res.json();
     content.innerHTML = "";
 
     if (!data.length) {
-      content.innerHTML = "<p>No enquiries.</p>";
+      content.innerHTML = "<p>No enquiries yet.</p>";
       return;
     }
 
@@ -137,7 +164,7 @@ async function loadContacts() {
       content.innerHTML += `
         <div class="card">
           <h4>${c.name}</h4>
-          <p>${c.email}</p>
+          <p><strong>${c.email}</strong></p>
           <p>${c.message}</p>
           <button onclick="deleteContact('${c.id}')">Delete</button>
         </div>
@@ -145,16 +172,28 @@ async function loadContacts() {
     });
 
   } catch (err) {
-    content.innerHTML = `<p class="admin-error">${err.message}</p>`;
+    content.innerHTML = `<p class="admin-error">
+      <strong>⚠️ Error loading enquiries:</strong><br/>
+      ${err.message.replace(/\n/g, "<br/>")}
+    </p>`;
+    console.error("Load Contacts Error:", err);
   }
 }
 
 async function deleteContact(id) {
-  await fetch(`${API_BASE}/api/contacts/${id}`, {
-    method: "DELETE",
-    headers: getAdminHeaders()
-  });
-  loadContacts();
+  if (!confirm("Delete this enquiry?")) return;
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/contacts/${id}`, {
+      method: "DELETE",
+      headers: getAdminHeaders()
+    });
+
+    if (!res.ok) throw new Error(await getApiError(res));
+    loadContacts();
+  } catch (err) {
+    alert(`❌ Failed to delete: ${err.message}`);
+  }
 }
 
 /* ================= PRODUCT MODAL ================= */
@@ -181,20 +220,29 @@ async function saveProduct() {
     isActive: document.getElementById("pActive").checked
   };
 
-  await fetch(`${API_BASE}/api/products/${id}`, {
-    method: "PUT",
-    headers: getAdminHeaders(),
-    body: JSON.stringify(body)
-  });
+  try {
+    const res = await fetch(`${API_BASE}/api/products/${id}`, {
+      method: "PUT",
+      headers: getAdminHeaders(),
+      body: JSON.stringify(body)
+    });
 
-  closeProductModal();
-  loadProducts();
+    if (!res.ok) throw new Error(await getApiError(res));
+    
+    closeProductModal();
+    loadProducts();
+    alert("✓ Product updated");
+  } catch (err) {
+    alert(`❌ Failed to save: ${err.message}`);
+  }
 }
+
 loadProducts();
 
 function logout() {
   adminKey = "";
   sessionStorage.removeItem("ADMIN_KEY");
+  console.log("✓ Admin key cleared");
   location.reload();
 }
 
@@ -220,36 +268,45 @@ async function addProduct() {
   const file = document.getElementById("newImage").files[0];
 
   if (!name || !price || !file) {
-    alert("Fill all required fields");
+    alert("❌ Fill all required fields");
     return;
   }
 
-  // Upload image
-  const formData = new FormData();
-  formData.append("image", file);
+  try {
+    // Upload image
+    const formData = new FormData();
+    formData.append("image", file);
 
-  const uploadRes = await fetch(`${API_BASE}/api/products/upload`, {
-    method: "POST",
-    headers: {
-      "x-admin-key": getAdminHeaders()["x-admin-key"]
-    },
-    body: formData
-  });
+    const uploadRes = await fetch(`${API_BASE}/api/products/upload`, {
+      method: "POST",
+      headers: {
+        "x-admin-key": getAdminHeaders()["x-admin-key"]
+      },
+      body: formData
+    });
 
-  const uploadData = await uploadRes.json();
+    if (!uploadRes.ok) throw new Error(await getApiError(uploadRes));
 
-  // Save product
-  await fetch(`${API_BASE}/api/products`, {
-    method: "POST",
-    headers: getAdminHeaders(),
-    body: JSON.stringify({
-      name,
-      price,
-      stock,
-      image: uploadData.url
-    })
-  });
+    const uploadData = await uploadRes.json();
 
-  closeAddProductModal();
-  loadProducts();
+    // Save product
+    const res = await fetch(`${API_BASE}/api/products`, {
+      method: "POST",
+      headers: getAdminHeaders(),
+      body: JSON.stringify({
+        name,
+        price,
+        stock,
+        image: uploadData.url
+      })
+    });
+
+    if (!res.ok) throw new Error(await getApiError(res));
+
+    closeAddProductModal();
+    loadProducts();
+    alert("✓ Product added successfully");
+  } catch (err) {
+    alert(`❌ Failed to add product: ${err.message}`);
+  }
 }

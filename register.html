@@ -1,13 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Create account | The Gami Co.</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" /><link rel="stylesheet" href="css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create account | The Gami Co.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="account-page">
   <div class="announce">Small-batch nutrition seeds, packed fresh for your kitchen</div>
-  <header class="wrap nav"><a class="brand" href="index.html">The Gami Co.</a><nav class="nav-links"><a href="shop.html">Shop</a><a href="login.html">Log in</a></nav></header>
-  <main class="auth-shell"><section class="auth-card"><p class="eyebrow">Start your pantry ritual</p><h1>Create account</h1><p>Save your delivery details and follow every order from one quiet little home base.</p><form id="registerForm" class="auth-form"><label>Full name<input type="text" id="registerName" required autocomplete="name" /></label><label>Email<input type="email" id="registerEmail" required autocomplete="email" /></label><label>Password<input type="password" id="registerPassword" minlength="6" required autocomplete="new-password" /></label><button class="btn" type="submit">Create account</button><p id="registerMessage" class="form-message" role="status"></p></form><p class="form-foot">Already registered? <a href="login.html">Log in</a></p></section></main>
-  <script src="js/main.js"></script>
+  <header class="wrap nav">
+    <a class="logo-link" href="index.html"><img src="assets/logo/bklogo.png" alt="The Gami Co. Logo" class="logo"></a>
+    <nav class="nav-links">
+      <a href="shop.html">Shop</a>
+      <a href="login.html">Log in</a>
+    </nav>
+  </header>
+  <main class="auth-shell">
+    <section class="auth-card">
+      <p class="eyebrow">Start your pantry ritual</p>
+      <h1>Create account</h1>
+      <p>Save your delivery details and follow every order from one quiet little dashboard.</p>
+      <form id="registerForm" class="auth-form" novalidate>
+        <label>
+          Full name
+          <input type="text" id="registerName" name="name" placeholder="Jane Smith" required />
+        </label>
+        <label>
+          Email address
+          <input type="email" id="registerEmail" name="email" placeholder="your@email.com" required />
+        </label>
+        <label>
+          Password (min 6 characters)
+          <input type="password" id="registerPassword" name="password" placeholder="••••••••" minlength="6" required />
+        </label>
+        <p class="form-message" id="register-status" role="status" aria-live="polite"></p>
+        <button type="submit" class="btn" id="registerSubmit">Create account</button>
+        <p class="form-foot">Already have an account? <a href="login.html">Log in</a></p>
+      </form>
+    </section>
+  </main>
+  <footer>
+    <div class="wrap footer-grid">
+      <div><strong>The Gami Co.</strong><p>Premium nutrition seeds for healthy living.</p></div>
+      <div><a href="index.html">Home</a><br/><a href="shop.html">Shop</a><br/><a href="contact.html">Contact</a></div>
+      <div><p style="margin:0;font-size:.9rem;">© 2025 The Gami Co. All rights reserved.</p></div>
+    </div>
+  </footer>
+  <script src="js/toast.js"></script>
+  <script src="js/auth.js"></script>
 </body>
 </html>

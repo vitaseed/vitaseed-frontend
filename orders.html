@@ -1,8 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Orders | The Gami Co.</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" /><link rel="stylesheet" href="css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orders | The Gami Co.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
-<body class="account-page"><div class="announce">Small-batch nutrition seeds, packed fresh for your kitchen</div><header class="wrap nav"><a class="brand" href="index.html">The Gami Co.</a><nav class="nav-links"><a href="shop.html">Shop</a><a href="profile.html">Profile</a><a class="active" href="orders.html">Orders</a><button class="btn-ghost" type="button" data-logout>Log out</button></nav></header><main class="orders-shell"><section class="page-head"><p class="eyebrow">Your history</p><h1>Orders</h1><p>A simple record of the good things you have sent our way.</p></section><section id="ordersList" class="orders-list"><p class="loading">Loading orders...</p></section></main><script src="js/main.js"></script></body>
+<body class="account-page">
+  <div class="announce">Small-batch nutrition seeds, packed fresh for your kitchen</div>
+  <header class="wrap nav">
+    <a class="logo-link" href="index.html"><img src="assets/logo/bklogo.png" alt="The Gami Co. Logo" class="logo"></a>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="profile.html">Profile</a>
+      <a href="#" data-logout>Log out</a>
+    </nav>
+  </header>
+  <main>
+    <section class="wrap page-head">
+      <p class="eyebrow">Order History</p>
+      <h1>Your orders</h1>
+      <p>Track all your purchases and delivery status.</p>
+    </section>
+    <section class="orders-shell">
+      <div id="ordersList" class="orders-list"></div>
+    </section>
+  </main>
+  <footer>
+    <div class="wrap footer-grid">
+      <div><strong>The Gami Co.</strong><p>Premium nutrition seeds for healthy living.</p></div>
+      <div><a href="index.html">Home</a><br/><a href="shop.html">Shop</a><br/><a href="contact.html">Contact</a></div>
+      <div><p style="margin:0;font-size:.9rem;">© 2025 The Gami Co. All rights reserved.</p></div>
+    </div>
+  </footer>
+  <script src="js/toast.js"></script>
+  <script src="js/main.js"></script>
+</body>
 </html>

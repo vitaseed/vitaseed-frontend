@@ -11,8 +11,41 @@
 </head>
 <body class="account-page">
   <div class="announce">Small-batch nutrition seeds, packed fresh for your kitchen</div>
-  <header class="wrap nav"><a class="brand" href="index.html">The Gami Co.</a><nav class="nav-links"><a href="shop.html">Shop</a><a href="register.html">Create account</a></nav></header>
-  <main class="auth-shell"><section class="auth-card"><p class="eyebrow">Welcome back</p><h1>Log in</h1><p>Keep your details ready for a faster checkout and a clearer order history.</p><form id="loginForm" class="auth-form"><label>Email<input type="email" id="loginEmail" required autocomplete="email" /></label><label>Password<input type="password" id="loginPassword" required autocomplete="current-password" /></label><button class="btn" type="submit">Log in</button><p id="loginMessage" class="form-message" role="status"></p></form><p class="form-foot">New here? <a href="register.html">Create your account</a></p></section></main>
-  <script src="js/main.js"></script>
+  <header class="wrap nav">
+    <a class="logo-link" href="index.html"><img src="assets/logo/bklogo.png" alt="The Gami Co. Logo" class="logo"></a>
+    <nav class="nav-links">
+      <a href="shop.html">Shop</a>
+      <a href="register.html">Create account</a>
+    </nav>
+  </header>
+  <main class="auth-shell">
+    <section class="auth-card">
+      <p class="eyebrow">Welcome back</p>
+      <h1>Log in</h1>
+      <p>Keep your details ready for faster checkout and clearer order history.</p>
+      <form id="loginForm" class="auth-form" novalidate>
+        <label>
+          Email address
+          <input type="email" id="loginEmail" name="email" placeholder="your@email.com" required />
+        </label>
+        <label>
+          Password
+          <input type="password" id="loginPassword" name="password" placeholder="••••••••" required />
+        </label>
+        <p class="form-message" id="login-status" role="status" aria-live="polite"></p>
+        <button type="submit" class="btn" id="loginSubmit">Log in</button>
+        <p class="form-foot">New to The Gami Co.? <a href="register.html">Create an account</a></p>
+      </form>
+    </section>
+  </main>
+  <footer>
+    <div class="wrap footer-grid">
+      <div><strong>The Gami Co.</strong><p>Premium nutrition seeds for healthy living.</p></div>
+      <div><a href="index.html">Home</a><br/><a href="shop.html">Shop</a><br/><a href="contact.html">Contact</a></div>
+      <div><p style="margin:0;font-size:.9rem;">© 2025 The Gami Co. All rights reserved.</p></div>
+    </div>
+  </footer>
+  <script src="js/toast.js"></script>
+  <script src="js/auth.js"></script>
 </body>
 </html>

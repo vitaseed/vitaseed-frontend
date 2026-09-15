@@ -1,8 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Profile | The Gami Co.</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" /><link rel="stylesheet" href="css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile | The Gami Co.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
-<body class="account-page"><div class="announce">Small-batch nutrition seeds, packed fresh for your kitchen</div><header class="wrap nav"><a class="brand" href="index.html">The Gami Co.</a><nav class="nav-links"><a href="shop.html">Shop</a><a class="active" href="profile.html">Profile</a><a href="orders.html">Orders</a><button class="btn-ghost" type="button" data-logout>Log out</button></nav></header><main class="account-shell"><section class="account-card"><p class="eyebrow">Your account</p><h1 id="profileTitle">Profile</h1><p id="profileIntro">Your saved details, ready when you are.</p><form id="profileForm" class="auth-form"><label>Full name<input id="profileName" required /></label><label>Email<input id="profileEmail" type="email" readonly /></label><label>Delivery note<textarea id="profileNote" rows="4" placeholder="Apartment, landmark, or delivery preference"></textarea></label><button class="btn" type="submit">Save details</button><p id="profileMessage" class="form-message" role="status"></p></form><div class="account-links"><a class="btn-ghost" href="orders.html">View orders</a><a class="btn-ghost" href="shop.html">Continue shopping</a></div></section></main><script src="js/main.js"></script></body>
+<body class="account-page">
+  <div class="announce">Small-batch nutrition seeds, packed fresh for your kitchen</div>
+  <header class="wrap nav">
+    <a class="logo-link" href="index.html"><img src="assets/logo/bklogo.png" alt="The Gami Co. Logo" class="logo"></a>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="orders.html">Orders</a>
+      <a href="#" data-logout>Log out</a>
+    </nav>
+  </header>
+  <main class="auth-shell">
+    <section class="wrap page-head">
+      <p class="eyebrow">Account Settings</p>
+      <h1 id="profileTitle">Hello, User</h1>
+      <p>Update your delivery details anytime.</p>
+    </section>
+    <section class="auth-card" style="max-width:600px;margin:40px auto;">
+      <form id="profileForm" class="auth-form" novalidate>
+        <label>
+          Full name
+          <input type="text" id="profileName" name="name" required />
+        </label>
+        <label>
+          Email address
+          <input type="email" id="profileEmail" name="email" disabled />
+        </label>
+        <label>
+          Delivery notes
+          <textarea id="profileNote" name="note" rows="4" placeholder="Any special instructions..."></textarea>
+        </label>
+        <p class="form-message" id="profile-status" role="status" aria-live="polite"></p>
+        <button type="submit" class="btn">Save changes</button>
+      </form>
+    </section>
+  </main>
+  <footer>
+    <div class="wrap footer-grid">
+      <div><strong>The Gami Co.</strong><p>Premium nutrition seeds for healthy living.</p></div>
+      <div><a href="index.html">Home</a><br/><a href="shop.html">Shop</a><br/><a href="contact.html">Contact</a></div>
+      <div><p style="margin:0;font-size:.9rem;">© 2025 The Gami Co. All rights reserved.</p></div>
+    </div>
+  </footer>
+  <script src="js/toast.js"></script>
+  <script src="js/main.js"></script>
+</body>
 </html>

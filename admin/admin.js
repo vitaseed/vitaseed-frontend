@@ -78,7 +78,10 @@ async function loadOrders() {
   try {
     clearUI("Orders");
 
-    const res = await fetch(`${API_BASE}/api/orders`, {
+    // Admin listing now lives at /admin/all — GET /api/orders is the
+    // customer-facing "my orders" route and requires a user JWT, not
+    // an admin key, so it always 401s for the admin panel.
+    const res = await fetch(`${API_BASE}/api/orders/admin/all`, {
       headers: getAdminHeaders()
     });
 
@@ -96,10 +99,20 @@ async function loadOrders() {
     }
 
     data.forEach(o => {
+      // Orders now hold a cart (o.items), not a single product/quantity.
+      const itemsHtml = (o.items || []).map(item => `
+        <div class="order-line">
+          <span>${item.productName || "Product"} × ${item.quantity}</span>
+          <span>₹${item.total}</span>
+        </div>
+      `).join("");
+
       content.innerHTML += `
         <div class="card">
-          <p><strong>${o.productName || "Product"}</strong></p>
-          <p>Qty: ${o.quantity}</p>
+          ${itemsHtml || "<p>No items</p>"}
+          <p><strong>Total: ₹${o.total ?? "-"}</strong></p>
+          <p>${o.shippingAddress || ""} ${o.phoneNumber ? `· ${o.phoneNumber}` : ""}</p>
+          <p>Payment: ${o.paymentStatus || "-"}</p>
 
           <select onchange="updateOrderStatus('${o.id}', this.value)">
             <option value="pending" ${o.status === "pending" ? "selected" : ""}>Pending</option>
@@ -125,6 +138,8 @@ async function updateOrderStatus(orderId, status) {
   if (!confirm("Save changes?")) return;
 
   try {
+    // This endpoint is unchanged — PATCH /api/orders/:id/status is
+    // still adminAuth-protected exactly as before.
     const res = await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
       method: "PATCH",
       headers: getAdminHeaders(),

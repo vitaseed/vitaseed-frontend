@@ -40,40 +40,6 @@ async function getApiError(res) {
 }
 
 /* ================= PRODUCTS ================= */
-async function loadProducts() {
-  try {
-    clearUI("Products");
-
-    // Products are public; no admin key needed
-    const res = await fetch(`${API_BASE}/api/products`);
-    if (!res.ok) throw new Error(await getApiError(res));
-    const data = await res.json();
-
-    content.innerHTML = "";
-    if (!data.length) {
-      content.innerHTML = "<p>No products found.</p>";
-      return;
-    }
-
-    data.forEach(p => {
-      content.innerHTML += `
-        <div class="card">
-          ${p.image ? `<img src="${p.image}" alt="${p.name}" />` : ""}
-          <h3>${p.name}</h3>
-          <p>₹${p.price}</p>
-          <p>Stock: ${p.stock ?? "-"}</p>
-          <p>Status: ${p.isActive ? "Active" : "Inactive"}</p>
-          <button onclick='openProductModal(${JSON.stringify(p)})'>Edit</button>
-        </div>
-      `;
-    });
-  } catch (err) {
-    content.innerHTML = `<p class="admin-error">${err.message}</p>`;
-    console.error("Load Products Error:", err);
-  }
-}
-
-/* ================= ORDERS ================= */
 async function loadOrders() {
   try {
     clearUI("Orders");

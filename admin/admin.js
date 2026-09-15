@@ -40,6 +40,56 @@ async function getApiError(res) {
 }
 
 /* ================= PRODUCTS ================= */
+let currentProducts = [];
+
+async function loadProducts() {
+  try {
+    clearUI("Products");
+
+    const res = await fetch(`${API_BASE}/api/products/admin/all`, {
+      headers: getAdminHeaders()
+    });
+
+    if (!res.ok) {
+      const errMsg = await getApiError(res);
+      throw new Error(errMsg);
+    }
+
+    currentProducts = await res.json();
+    content.innerHTML = "";
+
+    if (!currentProducts.length) {
+      content.innerHTML = "<p>No products yet.</p>";
+      return;
+    }
+
+    currentProducts.forEach(p => {
+      content.innerHTML += `
+        <div class="card">
+          ${p.image ? `<img src="${p.image}" alt="${p.name}" style="width:100%;border-radius:8px;" />` : ""}
+          <h4>${p.name}</h4>
+          <p>₹${p.price} · Stock: ${p.stock ?? 0}</p>
+          <p>${p.isActive === false ? "Inactive" : "Active"}</p>
+          <button onclick="editProductById('${p.id}')">Edit</button>
+        </div>
+      `;
+    });
+
+  } catch (err) {
+    content.innerHTML = `<p class="admin-error">
+      <strong>⚠️ Error loading products:</strong><br/>
+      ${err.message.replace(/\n/g, "<br/>")}
+    </p>`;
+    console.error("Load Products Error:", err);
+  }
+}
+
+function editProductById(id) {
+  const product = currentProducts.find(p => p.id === id);
+  if (product) openProductModal(product);
+}
+
+/* ================= ORDERS ================= */
 async function loadOrders() {
   try {
     clearUI("Orders");

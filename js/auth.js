@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const data = await res.json();
         localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('gami_user', JSON.stringify(data.user));
         
         loading.hide();
         toast.success('Welcome back!', 'Logged In', 2000);
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const data = await res.json();
         localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('gami_user', JSON.stringify(data.user));
         
         loading.hide();
         toast.success('Account created! Welcome to The Gami Co.', 'Welcome!', 2000);

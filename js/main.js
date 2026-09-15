@@ -22,14 +22,16 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupEventListeners() {
   const contactForm = document.getElementById('contactForm');
   if (contactForm) contactForm.addEventListener('submit', submitContactForm);
-  
+
   document.querySelectorAll('[data-open-cart]').forEach(btn => btn.addEventListener('click', openCart));
   document.querySelectorAll('[data-close-cart]').forEach(btn => btn.addEventListener('click', closeCart));
   document.querySelectorAll('[data-checkout]').forEach(btn => btn.addEventListener('click', submitCheckout));
   document.querySelectorAll('[data-logout]').forEach(btn => btn.addEventListener('click', logout));
-  
+
   document.addEventListener('click', e => {
     const qtyBtn = e.target.closest('[data-quantity]');
+    // Product ids from the API are Firestore document ids (strings),
+    // not numbers, so this is compared as-is — no parseInt/Number.
     if (qtyBtn) changeCartQuantity(qtyBtn.dataset.quantity, Number(qtyBtn.dataset.amount));
   });
 }
@@ -39,7 +41,7 @@ async function submitContactForm(e) {
   const name = document.getElementById('contact-name').value.trim();
   const email = document.getElementById('contact-email').value.trim();
   const message = document.getElementById('contact-message').value.trim();
-  
+
   if (!name || !email || !message) {
     toast.warning('Please fill all fields', 'Validation Error', 3000);
     return;
@@ -65,7 +67,7 @@ async function submitContactForm(e) {
 async function initStorePage() {
   const container = document.getElementById('shop-product-list');
   if (!container) return;
-  
+
   let products = [];
   try {
     loading.show('Loading seeds...');
@@ -78,7 +80,7 @@ async function initStorePage() {
     toast.error('Unable to load products', 'Error', 4000);
     return;
   }
-  
+
   const update = () => {
     const term = (document.getElementById('productSearch')?.value || '').toLowerCase();
     const sort = document.getElementById('productSort')?.value;
@@ -86,7 +88,7 @@ async function initStorePage() {
     const sorted = filtered.sort((a, b) => sort === 'low' ? a.price - b.price : sort === 'high' ? b.price - a.price : 0);
     renderProducts(sorted, container);
   };
-  
+
   document.getElementById('productSearch')?.addEventListener('input', update);
   document.getElementById('productSort')?.addEventListener('change', update);
   update();
@@ -106,10 +108,11 @@ function renderProducts(products, container) {
       </div>
     </div>
   `).join('');
-  
+
   container.querySelectorAll('[data-add-product]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const product = products.find(p => p.id === parseInt(btn.dataset.addProduct));
+      // p.id is a Firestore document id (string) — compare directly, no parseInt.
+      const product = products.find(p => p.id === btn.dataset.addProduct);
       if (product) addToCart(product);
     });
   });
@@ -126,7 +129,8 @@ function addToCart(product) {
 }
 
 function changeCartQuantity(id, amount) {
-  const cart = getCart().map(i => i.id === parseInt(id) ? { ...i, quantity: i.quantity + amount } : i).filter(i => i.quantity > 0);
+  // id is the Firestore product id (string) — compare directly, no parseInt.
+  const cart = getCart().map(i => i.id === id ? { ...i, quantity: i.quantity + amount } : i).filter(i => i.quantity > 0);
   saveCart(cart);
 }
 
@@ -154,7 +158,7 @@ function renderCart() {
       <strong>₹${i.price * i.quantity}</strong>
     </div>
   `).join('') : '<p style="padding:20px;text-align:center;color:var(--muted);">Your bag is empty</p>';
-  
+
   const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const totalEl = document.querySelector('[data-cart-total]');
   if (totalEl) totalEl.textContent = `₹${total}`;
@@ -173,23 +177,44 @@ function closeCart() {
 async function submitCheckout() {
   const cart = getCart();
   if (!cart.length) { toast.warning('Your bag is empty', 'Empty Cart', 2000); return; }
-  
+
   const token = getToken();
   if (!token) {
     toast.info('Please log in to checkout', 'Login Required', 2000);
     setTimeout(() => window.location.href = 'login.html?return=shop.html', 1000);
     return;
   }
-  
+
+  // The backend now creates one order per checkout (with a cart of items)
+  // and requires shipping details. Prefer whatever's on the saved profile;
+  // fall back to asking, and optional #checkoutAddress/#checkoutPhone
+  // fields in the cart drawer (if you add them) are picked up first.
+  const user = getUser();
+  let shippingAddress = document.getElementById('checkoutAddress')?.value?.trim() || user?.address;
+  let phoneNumber = document.getElementById('checkoutPhone')?.value?.trim() || user?.phone;
+
+  if (!shippingAddress) shippingAddress = (prompt('Shipping address:') || '').trim();
+  if (!phoneNumber) phoneNumber = (prompt('Phone number:') || '').trim();
+
+  if (!shippingAddress || !phoneNumber) {
+    toast.warning('Shipping address and phone number are required', 'Missing Details', 3000);
+    return;
+  }
+
   loading.show('Processing order...');
   try {
-    for (const item of cart) {
-      const res = await fetch(`${API_BASE}/api/orders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ productId: item.id, quantity: item.quantity })
-      });
-      if (!res.ok) throw new Error('Order failed');
+    const res = await fetch(`${API_BASE}/api/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        items: cart.map(i => ({ productId: i.id, quantity: i.quantity })),
+        shippingAddress,
+        phoneNumber
+      })
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Order failed');
     }
     saveCart([]);
     loading.hide();
@@ -205,35 +230,54 @@ async function submitCheckout() {
 function initProfilePage() {
   const form = document.getElementById('profileForm');
   if (!form) return;
-  
+
   const user = getUser();
-  if (!user) {
+  const token = getToken();
+  if (!user || !token) {
     setTimeout(() => window.location.href = 'login.html?return=profile.html', 500);
     return;
   }
-  
+
   document.getElementById('profileTitle').textContent = `Hello, ${user.name.split(' ')[0]}`;
   document.getElementById('profileName').value = user.name;
   document.getElementById('profileEmail').value = user.email;
-  
-  form.addEventListener('submit', e => {
+
+  form.addEventListener('submit', async e => {
     e.preventDefault();
-    const updatedUser = { ...user, name: document.getElementById('profileName').value.trim() };
-    saveUser(updatedUser);
-    toast.success('Profile updated', 'Success', 2000);
+    const name = document.getElementById('profileName').value.trim();
+
+    loading.show('Saving profile...');
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/me`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ name })
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Update failed');
+      }
+      const data = await res.json();
+      saveUser(data.user);
+      loading.hide();
+      toast.success('Profile updated', 'Success', 2000);
+    } catch (err) {
+      loading.hide();
+      toast.error(err.message || 'Failed to update profile', 'Error', 4000);
+    }
   });
 }
 
 function initOrdersPage() {
   const list = document.getElementById('ordersList');
   if (!list) return;
-  
+
   const token = getToken();
   if (!token) {
     setTimeout(() => window.location.href = 'login.html?return=orders.html', 500);
     return;
   }
-  
+
   loading.show('Loading orders...');
   fetch(`${API_BASE}/api/orders`, {
     headers: { 'Authorization': `Bearer ${token}` }

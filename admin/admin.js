@@ -68,7 +68,7 @@ async function loadProducts() {
         <div class="card">
           ${p.image ? `<img src="${p.image}" alt="${p.name}" style="width:100%;border-radius:8px;" />` : ""}
           <h4>${p.name}</h4>
-          <p>₹${p.price} · Stock: ${p.stock ?? 0}</p>
+          <p>₹${p.price} Quantity: ${p.quantity} · Stock: ${p.stock ?? 0}</p>
           <p>${p.isActive === false ? "Inactive" : "Active"}</p>
           <button onclick="editProductById('${p.id}')">Edit</button>
         </div>
@@ -233,6 +233,7 @@ function openProductModal(p) {
   document.getElementById("pId").value = p.id;
   document.getElementById("pName").value = p.name;
   document.getElementById("pPrice").value = p.price;
+  document.getElementById("pQuantity").value = p.quantity;
   document.getElementById("pStock").value = p.stock ?? 0;
   document.getElementById("pActive").checked = !!p.isActive;
 }
@@ -247,6 +248,7 @@ async function saveProduct() {
   const body = {
     name: document.getElementById("pName").value,
     price: Number(document.getElementById("pPrice").value),
+    quantity: Number(document.getElementById("pQuantity").value),
     stock: Number(document.getElementById("pStock").value),
     isActive: document.getElementById("pActive").checked
   };
@@ -295,10 +297,11 @@ function closeAddProductModal() {
 async function addProduct() {
   const name = document.getElementById("newName").value;
   const price = Number(document.getElementById("newPrice").value);
+  const quantity = Number(document.getElementById("newQuantity").value);
   const stock = Number(document.getElementById("newStock").value);
   const file = document.getElementById("newImage").files[0];
 
-  if (!name || !price || !file) {
+  if (!name || !price || !file || !quantity ) {
     alert("❌ Fill all required fields");
     return;
   }
@@ -328,6 +331,7 @@ async function addProduct() {
         name,
         price,
         stock,
+        quantity,
         image: uploadData.url
       })
     });

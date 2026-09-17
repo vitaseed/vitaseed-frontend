@@ -101,7 +101,7 @@ function renderProducts(products, container) {
       <div class="store-card-body">
         <h3>${escapeHtml(p.name)}</h3>
         <p class="price">₹${p.price}</p>
-        <p class="stock">${p.quantity}gm</p>
+        <p class="price">${p.quantity}gm</p>
         <div class="store-card-row">
           <strong>Add to cart</strong>
           <button type="button" class="btn btn-small" data-add-product="${p.id}">+</button>
